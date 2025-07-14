@@ -72,6 +72,10 @@ def get_observations():
     country_code = request.args.get('country', 'US')     # Default to United States
     year_param = request.args.get('year')                # Get the year parameter (can be None)
     
+    # CHQ: Gemini AI modified to factor in month and day
+    month_param = request.args.get('month')              # Get the month parameter (can be None)
+    day_param = request.args.get('day')                  # Get the day parameter (can be None)
+
     # GBIF API allows a range of years, so let's handle that.
     # If the user provides "2020,2022", it will be passed directly.
     # If a single year like "2020" is passed, it works fine too.
@@ -87,9 +91,14 @@ def get_observations():
         'limit': '100'                   # Limit results per page
     }
 
+    # CHQ: Gemini AI modified to factor in month and day
     # Conditionally add the 'year' parameter if it was provided in the request URL
     if year_param:
         params['year'] = year_param
+    if month_param:
+        params['month'] = month_param
+    if day_param:
+        params['day'] = day_param
 
     # Construct the full endpoint URL
     endpoint = GBIF_BASE_URL + "/occurrence/search"
@@ -98,9 +107,17 @@ def get_observations():
         r = requests.get(endpoint, params=params)
         json_data = r.json()
 
+        # CHQ: Gemini AI modified to factor in month and day
         if r.status_code == 200:
-            print(f'Data retrieved from GBIF for taxonKey={taxon_key}, country={country_code}'
-                  f'{f", year={year_param}" if year_param else ""}!')
+            query_info = f"taxonKey={taxon_key}, country={country_code}"
+            if year_param:
+                query_info += f", year={year_param}"
+            if month_param:
+                query_info += f", month={month_param}"
+            if day_param:
+                query_info += f", day={day_param}"
+            
+            print(f'Data retrieved from GBIF for {query_info}!')
             
             data = json_data.get('results', [])
             return jsonify(data)
