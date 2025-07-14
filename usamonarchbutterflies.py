@@ -10,6 +10,7 @@ from io import BytesIO
 import requests
 import pandas as pd
 import json
+import logging
 
 from datetime import datetime
 
