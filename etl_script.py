@@ -8,7 +8,7 @@ import logging
 import requests
 import json
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta # Add timedelta here
 from dateutil.parser import parse as parse_date # For robust date parsing
 from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
 
@@ -249,8 +249,20 @@ def run_monarch_etl(target_year=None, target_month=None, target_day=None,
 
     logger.info("--- ETL process finished ---")
 
-
+# CHQ: Gemin AI modified the main for the github actions job
 if __name__ == '__main__':
+    # When run by a scheduler, we typically want to process data for the *previous* full day.
+    # If this ETL runs after midnight (e.g., 2 AM), 'yesterday' refers to the day that just completed.
+
+    # Calculate yesterday's date
+    target_date = datetime.now() - timedelta(days=1)
+
+    logger.info(f"\nRunning ETL for {target_date.year}-{target_date.month}-{target_date.day}")
+    run_monarch_etl(target_year=target_date.year, target_month=target_date.month, target_day=target_date.day)
+
+    # If you wanted to fetch for the current day instead (e.g., if running mid-day), you'd use:
+    # today = datetime.now()
+    # run_monarch_etl(target_year=today.year, target_month=today.month, target_day=today.day)
     # --- ETL Execution Examples ---
     # Before running, ensure your Neon environment variables are set!
     # e.g., export NEON_DB_HOST="..." etc.
