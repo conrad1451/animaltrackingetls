@@ -11,6 +11,8 @@ import requests
 import pandas as pd
 import json
 
+from datetime import datetime
+
 # Initialize Flask app
 app = Flask(__name__)
  
@@ -23,6 +25,15 @@ parameters = {
     'elements': 'mean(air_temperature P1D),sum(precipitation_amount P1D),mean(wind_speed P1D)',
     'referencetime': '2010-04-01/2010-04-03',
 }
+
+
+
+date_string = "2025-01-12T20:27:23"
+date_object = datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S")
+
+print(f"Original string: {date_string}")
+print(f"Datetime object: {date_object}")
+print(f"Type of object: {type(date_object)}")
 
 
 def get_full_table():
@@ -50,6 +61,45 @@ def get_succinct_table():
     # Preview the result
     df2.head()
  
+
+def date_conversions(orig_date):
+    # date_string = "2025-01-12T20:27:23"
+    date_string=orig_date
+    date_object = datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S")
+
+    print(f"Original string: {date_string}")
+    print(f"Datetime object: {date_object}")
+    print(f"Type of object: {type(date_object)}")
+
+
+    date_only = date_object.strftime("%Y-%m-%d")
+    print(f"Date only (YYYY-MM-DD): {date_only}")
+
+    time_only = date_object.strftime("%H:%M:%S")
+    print(f"Time only (HH:MM:SS): {time_only}")
+
+def filter_for_date(the_data, the_query_info):
+
+    theOutput = []
+
+    for entry in the_data:
+        date_string=entry.dateIdentified
+        date_object = datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S")
+
+        date_only = date_object.strftime("%Y-%m-%d")
+        time_only = date_object.strftime("%H:%M:%S")
+
+        month_only = date_object.strftime("%m")
+        day_only = date_object.strftime("%d")
+        year_only = date_object.strftime("%Y")
+
+
+        if(month in the_query_info is defined):
+            if(day in the_query_info is defined):
+                if (day and month of the_query_info match that of month_only and day_only):
+                    theOutput.append(entry)
+  
+
 
 @app.route('/')
 def index():
@@ -120,6 +170,14 @@ def get_observations():
             print(f'Data retrieved from GBIF for {query_info}!')
             
             data = json_data.get('results', [])
+            
+            filter_for_date(data, query_info)
+
+ 
+            
+                
+
+
             return jsonify(data)
 
         else:
