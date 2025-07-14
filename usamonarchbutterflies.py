@@ -2,10 +2,10 @@
 # [1]: https://stackoverflow.com/questions/10727366/jsonify-is-not-defined-internal-server-error
 
 import os
-from flask import Flask, Response, request, send_file, jsonify # [1]
+from flask import Flask, Response, request, send_file, jsonify
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
-  
+ 
 # Libraries needed (pandas is not standard and must be installed in Python)
 import requests
 import pandas as pd
@@ -16,61 +16,67 @@ from datetime import datetime
 # Initialize Flask app
 app = Flask(__name__)
  
-
 # Define endpoint and parameters
 GBIF_BASE_URL = 'https://api.gbif.org/v1'
 
+# The 'parameters' dictionary below is for the MET Norway Frost API,
+# not directly used by the GBIF API call in get_observations.
+# I'll keep it here as it was in your original code, but note its context.
 parameters = {
     'sources': 'SN18700,SN90450',
     'elements': 'mean(air_temperature P1D),sum(precipitation_amount P1D),mean(wind_speed P1D)',
     'referencetime': '2010-04-01/2010-04-03',
 }
 
+# These lines are for demonstration of date_conversions, not directly part of the Flask app flow
+date_string_example = "2025-01-12T20:27:23"
+date_object_example = datetime.strptime(date_string_example, "%Y-%m-%dT%H:%M:%S")
+
+print(f"Original string: {date_string_example}")
+print(f"Datetime object: {date_object_example}")
+print(f"Type of object: {type(date_object_example)}")
 
 
-date_string = "2025-01-12T20:27:23"
-date_object = datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S")
-
-print(f"Original string: {date_string}")
-print(f"Datetime object: {date_object}")
-print(f"Type of object: {type(date_object)}")
-
-
-def get_full_table():
+# The following two functions (get_full_table, get_succinct_table)
+# are not currently called or used in the Flask app.
+# They also rely on a global 'data' variable which is not defined in this scope.
+# If you intend to use them, they would need to take 'data' as an argument
+# or be called within a function where 'data' is available.
+def get_full_table(data_from_api):
     # This will return a Dataframe with all of the observations in a table format
     df = pd.DataFrame()
-    for i in range(len(data)):
-        row = pd.DataFrame(data[i]['observations'])
-        row['referenceTime'] = data[i]['referenceTime']
-        row['sourceId'] = data[i]['sourceId']
-        df = df.append(row)
+    for i in range(len(data_from_api)):
+        # Assuming data_from_api structure similar to MET Norway data
+        # For GBIF data, it would be different, often each 'entry' is an observation
+        # This function might need a complete rewrite depending on data source.
+        if 'observations' in data_from_api[i]: # Check if it's MET Norway format
+            row = pd.DataFrame(data_from_api[i]['observations'])
+            row['referenceTime'] = data_from_api[i]['referenceTime']
+            row['sourceId'] = data_from_api[i]['sourceId']
+            df = pd.concat([df, row], ignore_index=True) # Use pd.concat for appending
+    
+    # If data_from_api is already GBIF 'results' list, this function needs different logic
+    # For now, assuming it's the MET Norway structure you provided earlier.
+    return df.reset_index(drop=True)
 
-    df = df.reset_index()
-    df.head()
 
-
-def get_succinct_table():
-    df = pd.DataFrame()
-
-    # These additional columns will be kept
+def get_succinct_table(df_full):
+    # Assuming df_full is the DataFrame from get_full_table
     columns = ['sourceId','referenceTime','elementId','value','unit','timeOffset']
-    df2 = df[columns].copy()
+    df2 = df_full[columns].copy()
     # Convert the time value to something Python understands
     df2['referenceTime'] = pd.to_datetime(df2['referenceTime'])
+    return df2
 
-    # Preview the result
-    df2.head()
- 
 
 def date_conversions(orig_date):
-    # date_string = "2025-01-12T20:27:23"
-    date_string=orig_date
+    # This function is fine for demonstrating date conversions
+    date_string = orig_date
     date_object = datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S")
 
     print(f"Original string: {date_string}")
     print(f"Datetime object: {date_object}")
     print(f"Type of object: {type(date_object)}")
-
 
     date_only = date_object.strftime("%Y-%m-%d")
     print(f"Date only (YYYY-MM-DD): {date_only}")
@@ -78,28 +84,78 @@ def date_conversions(orig_date):
     time_only = date_object.strftime("%H:%M:%S")
     print(f"Time only (HH:MM:SS): {time_only}")
 
-def filter_for_date(the_data, the_query_info):
+# CHQ: Gemini AI modified this endpoint
+def filter_for_date(the_data, query_params):
+    """
+    Filters a list of GBIF occurrence records based on year, month, and day
+    provided in query_params.
 
+    Args:
+        the_data (list): A list of dictionaries, where each dictionary is a GBIF occurrence record.
+                         Expected to have an 'eventDate' key.
+        query_params (dict): A dictionary containing 'year', 'month', 'day'
+                             (as strings, if present).
+    Returns:
+        list: A new list containing only the records that match the date filters.
+    """
     theOutput = []
 
+    query_year = query_params.get('year')
+    query_month = query_params.get('month')
+    query_day = query_params.get('day')
+
     for entry in the_data:
-        date_string=entry.dateIdentified
-        date_object = datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S")
+        # GBIF occurrence records typically have 'eventDate'
+        date_string_from_entry = entry.get('eventDate') 
+        
+        if not date_string_from_entry:
+            # Skip entries without a date string
+            continue
 
-        date_only = date_object.strftime("%Y-%m-%d")
-        time_only = date_object.strftime("%H:%M:%S")
+        try:
+            # Parse the date string from the GBIF record
+            # GBIF eventDate can sometimes be just a year or year-month,
+            # so a more robust parsing might be needed for production.
+            # For this example, assuming "YYYY-MM-DDTHH:MM:SS" or "YYYY-MM-DD"
+            
+            # Attempt to parse full datetime first
+            try:
+                date_object = datetime.strptime(date_string_from_entry, "%Y-%m-%dT%H:%M:%S")
+            except ValueError:
+                # If it's just a date, try that format
+                date_object = datetime.strptime(date_string_from_entry, "%Y-%m-%d")
+            
+            # Extract components from the date object
+            year_only = date_object.strftime("%Y")
+            month_only = date_object.strftime("%m")
+            day_only = date_object.strftime("%d")
 
-        month_only = date_object.strftime("%m")
-        day_only = date_object.strftime("%d")
-        year_only = date_object.strftime("%Y")
+            # Assume a match by default
+            match = True
 
+            # Apply filters if provided
+            if query_year is not None and year_only != query_year:
+                match = False
+            
+            if query_month is not None and month_only != query_month:
+                match = False
+            
+            if query_day is not None and day_only != query_day:
+                match = False
 
-        if(month in the_query_info is defined):
-            if(day in the_query_info is defined):
-                if (day and month of the_query_info match that of month_only and day_only):
-                    theOutput.append(entry)
-  
+            if match:
+                theOutput.append(entry)
 
+        except ValueError as e:
+            # Handle cases where the date string from the entry is not in the expected format
+            print(f"Warning: Could not parse date '{date_string_from_entry}' from entry. Error: {e}")
+            continue
+        except AttributeError:
+            # Handle cases where date_string_from_entry might not be a string
+            print(f"Warning: 'eventDate' is not a string in entry: {entry.get('eventDate')}")
+            continue
+
+    return theOutput
 
 @app.route('/')
 def index():
@@ -112,25 +168,17 @@ def index():
      
     """
 
-# CHQ: Gemini AI generated this endpoint
+# CHQ: Gemini AI modified this endpoint
 @app.route('/api/monarchbutterflyoccurences')
 def get_observations():
     # Get parameters from the URL query string
-    # e.g., /animaloccurences?taxonKey=5133088&country=US&year=2020
+    # e.g., /animaloccurences?taxonKey=5133088&country=US&year=2020&month=7&day=15
 
     taxon_key = request.args.get('taxonKey', '5133088') # Default to Monarch Butterfly
     country_code = request.args.get('country', 'US')     # Default to United States
     year_param = request.args.get('year')                # Get the year parameter (can be None)
-    
-    # CHQ: Gemini AI modified to factor in month and day
     month_param = request.args.get('month')              # Get the month parameter (can be None)
     day_param = request.args.get('day')                  # Get the day parameter (can be None)
-
-    # GBIF API allows a range of years, so let's handle that.
-    # If the user provides "2020,2022", it will be passed directly.
-    # If a single year like "2020" is passed, it works fine too.
-    # If no year is provided, we can either default to a specific year/range or omit it
-    # to get all available years. For this example, let's omit it if not provided.
 
     # Define common parameters for the GBIF occurrence search
     params = {
@@ -141,8 +189,7 @@ def get_observations():
         'limit': '100'                   # Limit results per page
     }
 
-    # CHQ: Gemini AI modified to factor in month and day
-    # Conditionally add the 'year' parameter if it was provided in the request URL
+    # Conditionally add the 'year', 'month', 'day' parameters if provided in the request URL
     if year_param:
         params['year'] = year_param
     if month_param:
@@ -157,7 +204,6 @@ def get_observations():
         r = requests.get(endpoint, params=params)
         json_data = r.json()
 
-        # CHQ: Gemini AI modified to factor in month and day
         if r.status_code == 200:
             query_info = f"taxonKey={taxon_key}, country={country_code}"
             if year_param:
@@ -169,16 +215,15 @@ def get_observations():
             
             print(f'Data retrieved from GBIF for {query_info}!')
             
-            data = json_data.get('results', [])
+            # GBIF's occurrence search results are in the 'results' key
+            raw_data = json_data.get('results', [])
             
-            filter_for_date(data, query_info)
+            # Now, filter the raw data using your filter_for_date function
+            # Pass the entire params dictionary so filter_for_date can access year, month, day
+            filtered_data = filter_for_date(raw_data, params)
 
- 
-            
-                
-
-
-            return jsonify(data)
+            # Return the filtered data
+            return jsonify(filtered_data)
 
         else:
             error_message = json_data.get('error', {}).get('message', 'No specific error message')
@@ -201,7 +246,6 @@ def get_observations():
     except json.JSONDecodeError:
         print(f"Error decoding JSON response: {r.text}")
         return jsonify({"error": "Invalid JSON response from GBIF"}), 500
-
 
 # --- Run the Flask App ---
 if __name__ == '__main__':
