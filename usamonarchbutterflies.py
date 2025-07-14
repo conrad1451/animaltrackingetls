@@ -11,11 +11,7 @@ import pandas as pd
 
 # Initialize Flask app
 app = Flask(__name__)
-
-FROST_API_CLIENTID = os.getenv("FROST_API_CLIENTID", 'YOUR_API_KEY')
-
-# Insert your own client ID here
-client_id = FROST_API_CLIENTID
+ 
 
 # Define endpoint and parameters
 GBIF_BASE_URL = 'https://api.gbif.org/v1'
