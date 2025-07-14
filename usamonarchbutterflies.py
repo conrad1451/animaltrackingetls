@@ -9,6 +9,7 @@ from io import BytesIO
 # Libraries needed (pandas is not standard and must be installed in Python)
 import requests
 import pandas as pd
+import json
 
 # Initialize Flask app
 app = Flask(__name__)
