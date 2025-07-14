@@ -269,9 +269,9 @@ if __name__ == '__main__':
 
     # Example 1: Fetch data for a specific day (e.g., today)
     # This is a good way to test without pulling too much data initially.
-    current_date = datetime.now()
-    logger.info(f"\nRunning ETL for {current_date.year}-{current_date.month}-{current_date.day}")
-    run_monarch_etl(target_year=current_date.year, target_month=current_date.month, target_day=current_date.day)
+    # current_date = datetime.now()
+    # logger.info(f"\nRunning ETL for {current_date.year}-{current_date.month}-{current_date.day}")
+    # run_monarch_etl(target_year=current_date.year, target_month=current_date.month, target_day=current_date.day)
 
     # Example 2: Fetch data for an entire month (be aware of data volume!)
     # logger.info("\nRunning ETL for 2024-06 (June 2024) - WARNING: Can be large!")
