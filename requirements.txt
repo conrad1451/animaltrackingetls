@@ -8,3 +8,6 @@ Pillow
 pandas
 tenacity
 logging
+ 
+python-dateutil
+sqlalchemy
