@@ -1,10 +1,11 @@
+# Sources:
+# [1]: https://stackoverflow.com/questions/10727366/jsonify-is-not-defined-internal-server-error
+
 import os
-from flask import Flask, Response, request, send_file
-# import requests
+from flask import Flask, Response, request, send_file, jsonify # [1]
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
-import jsonify
-
+  
 # Libraries needed (pandas is not standard and must be installed in Python)
 import requests
 import pandas as pd
