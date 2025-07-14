@@ -61,52 +61,49 @@ def index():
     """
 
 # CHQ: Gemini AI generated this endpoint
-@app.route('/animaloccurences')
+@app.route('/monarchbutterflyoccurences')
 def get_observations():
-    # Get parameters from the URL query string (e.g., /animaloccurences?taxonKey=5133088&country=US)
-    # Provide default values if parameters are not supplied in the URL
+    # Get parameters from the URL query string
+    # e.g., /animaloccurences?taxonKey=5133088&country=US&year=2020
+
     taxon_key = request.args.get('taxonKey', '5133088') # Default to Monarch Butterfly
     country_code = request.args.get('country', 'US')     # Default to United States
+    year_param = request.args.get('year')                # Get the year parameter (can be None)
+    
+    # GBIF API allows a range of years, so let's handle that.
+    # If the user provides "2020,2022", it will be passed directly.
+    # If a single year like "2020" is passed, it works fine too.
+    # If no year is provided, we can either default to a specific year/range or omit it
+    # to get all available years. For this example, let's omit it if not provided.
 
     # Define common parameters for the GBIF occurrence search
-    # Using a dictionary for parameters is cleaner and handles URL encoding automatically
     params = {
         'taxonKey': taxon_key,
         'country': country_code,
         'hasCoordinate': 'true',         # Only records with coordinates
         'hasGeospatialIssue': 'false',   # Exclude records with geospatial issues
-        'year': '2024',                  # Example: filter for a specific year
         'limit': '100'                   # Limit results per page
     }
 
+    # Conditionally add the 'year' parameter if it was provided in the request URL
+    if year_param:
+        params['year'] = year_param
+
     # Construct the full endpoint URL
-    # requests.get will automatically append and encode the 'params' dictionary
     endpoint = GBIF_BASE_URL + "/occurrence/search"
 
     try:
-        # Issue an HTTP GET request
-        # Note: 'auth' is typically for Basic Auth. For GBIF's public search, it's not needed.
-        # If you were making authenticated requests (e.g., for bulk downloads),
-        # you'd use (your_gbif_username, your_gbif_password) for auth.
         r = requests.get(endpoint, params=params)
-
-        # Extract JSON data
         json_data = r.json()
 
-        # Check if the request worked
         if r.status_code == 200:
-            print(f'Data retrieved from GBIF for taxonKey={taxon_key}, country={country_code}!')
+            print(f'Data retrieved from GBIF for taxonKey={taxon_key}, country={country_code}'
+                  f'{f", year={year_param}" if year_param else ""}!')
             
-            # GBIF's occurrence search results are typically in the 'results' key
-            # It also includes 'offset', 'limit', 'endOfRecords', 'count'
-            data = json_data.get('results', []) # Use .get() to safely access 'results'
-
-            # You might want to return more than just the 'results' if needed,
-            # or process 'results' further.
+            data = json_data.get('results', [])
             return jsonify(data)
 
         else:
-            # Handle API errors
             error_message = json_data.get('error', {}).get('message', 'No specific error message')
             error_reason = json_data.get('error', {}).get('reason', 'Unknown reason')
             
@@ -114,7 +111,6 @@ def get_observations():
             print(f'Message: {error_message}')
             print(f'Reason: {error_reason}')
             
-            # Return a JSON error response
             return jsonify({
                 "error": "Failed to retrieve data from GBIF",
                 "status_code": r.status_code,
@@ -123,13 +119,12 @@ def get_observations():
             }), r.status_code
 
     except requests.exceptions.RequestException as e:
-        # Handle network or request-related errors
         print(f"Network or request error: {e}")
         return jsonify({"error": f"Network or request error: {e}"}), 500
     except json.JSONDecodeError:
-        # Handle cases where the response is not valid JSON
         print(f"Error decoding JSON response: {r.text}")
         return jsonify({"error": "Invalid JSON response from GBIF"}), 500
+
 
 # --- Run the Flask App ---
 if __name__ == '__main__':
