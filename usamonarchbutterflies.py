@@ -63,7 +63,7 @@ def index():
     """
 
 # CHQ: Gemini AI generated this endpoint
-@app.route('/monarchbutterflyoccurences')
+@app.route('/api/monarchbutterflyoccurences')
 def get_observations():
     # Get parameters from the URL query string
     # e.g., /animaloccurences?taxonKey=5133088&country=US&year=2020

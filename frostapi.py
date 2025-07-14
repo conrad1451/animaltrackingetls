@@ -62,7 +62,7 @@ def index():
      
     """
 
-@app.route('/observations')
+@app.route('/api/observations')
 def get_observations():
     # Issue an HTTP GET request
     endpoint = FROST_BASE_URL + "observations/v0.jsonld"

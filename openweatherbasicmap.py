@@ -104,7 +104,7 @@ def index():
     <p>Make sure your <code>OPENWEATHERMAP_API_KEY</code> environment variable is set!</p>
     """
 
-@app.route('/tile/<layer>/<int:z>/<int:x>/<int:y>')
+@app.route('/api/tile/<layer>/<int:z>/<int:x>/<int:y>')
 def get_weather_tile(layer, z, x, y):
     """
     ETL endpoint for OpenWeatherMap tiles.
