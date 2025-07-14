@@ -64,6 +64,7 @@ def index():
      
     """
 
+# CHQ: Gemini AI generated this endpoint
 @app.route('/animaloccurences')
 def get_observations():
     # Get parameters from the URL query string (e.g., /animaloccurences?taxonKey=5133088&country=US)
