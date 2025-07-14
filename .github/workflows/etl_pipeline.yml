@@ -22,7 +22,7 @@ on:
     # old time of 2 am UTC
     # - cron: "0 2 * * *"
     # new time of 2pm NYC time (1840 UTC)
-    - cron: "40 18 * * *"
+    - cron: "52 18 * * *"
 
 jobs:
   run_etl:
