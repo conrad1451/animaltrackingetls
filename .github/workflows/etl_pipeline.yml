@@ -19,7 +19,10 @@ on:
     # Uses cron syntax. Learn more: https://crontab.guru/
     # Example: "0 2 * * *" means "at 02:00 (2 AM) every day"
     # Make sure this time makes sense for when the previous day's data is complete.
-    - cron: "0 2 * * *"
+    # old time of 2 am UTC
+    # - cron: "0 2 * * *"
+    # new time of 2pm NYC time (1840 UTC)
+    - cron: "40 18 * * *"
 
 jobs:
   run_etl:
