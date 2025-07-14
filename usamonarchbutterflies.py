@@ -13,6 +13,14 @@ import json
 
 from datetime import datetime
 
+# CHQ: Gemini AI did the import
+from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
+
+# CHQ: Gemini AI added the logic for logging 
+# Configure logging for better visibility of retries and other messages
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
 # Initialize Flask app
 app = Flask(__name__)
  
@@ -157,6 +165,28 @@ def filter_for_date(the_data, query_params):
 
     return theOutput
 
+
+# Define a retry decorator for API calls
+@retry(
+    wait=wait_exponential(multiplier=1, min=2, max=40), # Wait 2, 4, 8, 10, 10 seconds between retries
+    stop=stop_after_attempt(5),                          # Try up to 5 times
+    retry=retry_if_exception_type((
+        requests.exceptions.ConnectionError,
+        requests.exceptions.Timeout,
+        requests.exceptions.HTTPError # Retry on HTTP errors (e.g., 5xx server errors)
+    )),
+    reraise=True # Re-raise the last exception if all retries fail
+)
+def fetch_gbif_page(endpoint, params):
+    """
+    Fetches a single page of data from the GBIF API with retry logic.
+    """
+    logger.info(f"Attempting to fetch data from: {endpoint} with params: {params}")
+    response = requests.get(endpoint, params=params)
+    response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+    return response.json()
+
+
 @app.route('/')
 def index():
     """
@@ -199,58 +229,70 @@ def get_observations():
 
     # Construct the full endpoint URL
     endpoint = GBIF_BASE_URL + "/occurrence/search"
+    all_gbif_records = []
+    current_offset = 0
+    end_of_records = False
 
+    query_info = f"taxonKey={taxon_key}, country={country_code}"
+    if year_param: query_info += f", year={year_param}"
+    if month_param: query_info += f", month={month_param}"
+    if day_param: query_info += f", day={day_param}"
+
+    logger.info(f"Starting data retrieval for {query_info}")
     try:
-        r = requests.get(endpoint, params=params)
-        json_data = r.json()
+        while not end_of_records:
+            current_params = base_params.copy() # Create a copy to modify offset
+            current_params['offset'] = current_offset
 
-        if r.status_code == 200:
-            query_info = f"taxonKey={taxon_key}, country={country_code}"
-            if year_param:
-                query_info += f", year={year_param}"
-            if month_param:
-                query_info += f", month={month_param}"
-            if day_param:
-                query_info += f", day={day_param}"
+            # Fetch a page with retry logic
+            page_data = fetch_gbif_page(endpoint, current_params)
             
-            print(f'Data retrieved from GBIF for {query_info}!')
+            # Append results from the current page
+            all_gbif_records.extend(page_data.get('results', []))
             
-            # GBIF's occurrence search results are in the 'results' key
-            raw_data = json_data.get('results', [])
+            # Check for end of records
+            end_of_records = page_data.get('endOfRecords', True)
             
-            # Now, filter the raw data using your filter_for_date function
-            # Pass the entire params dictionary so filter_for_date can access year, month, day
-            filtered_data = filter_for_date(raw_data, params)
+            # Update offset for the next page
+            current_offset += page_data.get('limit', 0) # Use actual limit returned by API
+            
+            logger.info(f"Fetched {len(page_data.get('results', []))} records. Total fetched: {len(all_gbif_records)}. End of records: {end_of_records}")
 
-            # Return the filtered data
-            return jsonify(filtered_data)
+            # Optional: Add a small delay between requests to be polite to the API
+            if not end_of_records:
+                time.sleep(0.1) # 100 milliseconds delay
 
-        else:
-            error_message = json_data.get('error', {}).get('message', 'No specific error message')
-            error_reason = json_data.get('error', {}).get('reason', 'Unknown reason')
-            
-            print(f'Error! Returned status code {r.status_code}')
-            print(f'Message: {error_message}')
-            print(f'Reason: {error_reason}')
-            
-            return jsonify({
-                "error": "Failed to retrieve data from GBIF",
-                "status_code": r.status_code,
-                "message": error_message,
-                "reason": error_reason
-            }), r.status_code
+        logger.info(f'All data retrieved from GBIF for {query_info}! Total raw records: {len(all_gbif_records)}')
+        
+        # Now, filter the raw data using your filter_for_date function
+        # Pass the entire base_params dictionary so filter_for_date can access year, month, day
+        filtered_data = filter_for_date(all_gbif_records, base_params)
+        logger.info(f"Filtered records: {len(filtered_data)}")
 
+        return jsonify(filtered_data)
+
+    except requests.exceptions.HTTPError as e:
+        error_message = f"HTTP Error: {e.response.status_code} - {e.response.text}"
+        logger.error(f"Failed to retrieve data after retries: {error_message}")
+        return jsonify({
+            "error": "Failed to retrieve data from GBIF after multiple attempts",
+            "status_code": e.response.status_code,
+            "message": error_message
+        }), e.response.status_code
     except requests.exceptions.RequestException as e:
-        print(f"Network or request error: {e}")
-        return jsonify({"error": f"Network or request error: {e}"}), 500
+        logger.error(f"Network or request error after retries: {e}")
+        return jsonify({"error": f"Network or request error after multiple attempts: {e}"}), 500
     except json.JSONDecodeError:
-        print(f"Error decoding JSON response: {r.text}")
+        logger.error(f"Error decoding JSON response from GBIF: {r.text if 'r' in locals() else 'No response object'}")
         return jsonify({"error": "Invalid JSON response from GBIF"}), 500
+    except Exception as e:
+        logger.error(f"An unexpected error occurred: {e}", exc_info=True)
+        return jsonify({"error": f"An unexpected error occurred: {e}"}), 500
 
 # --- Run the Flask App ---
 if __name__ == '__main__':
     # To run:
-    # 1. pip install Flask requests Pillow
+    # 1. pip install Flask requests pandas Pillow tenacity
     # 2. Set your API key:
     #    On Linux/macOS: export OPENWEATHERMAP_API_KEY="YOUR_API_KEY_HERE"
     #    On Windows (Command Prompt): set OPENWEATHERMAP_API_KEY="YOUR_API_KEY_HERE"

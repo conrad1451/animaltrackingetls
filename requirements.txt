@@ -6,4 +6,4 @@ gunicorn==23.0.0
 requests
 Pillow
 pandas
- 
+tenacity
