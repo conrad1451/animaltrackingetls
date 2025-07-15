@@ -239,6 +239,7 @@ def get_observations():
     if month_param: query_info += f", month={month_param}"
     if day_param: query_info += f", day={day_param}"
 
+    base_params= params
     logger.info(f"Starting data retrieval for {query_info}")
     try:
         while not end_of_records:
