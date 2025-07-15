@@ -92,7 +92,7 @@ def extract_gbif_data(taxon_key=DEFAULT_TAXON_KEY, country_code=DEFAULT_COUNTRY_
             logger.info(f"Fetched {len(records_on_page)} records. Total: {len(all_gbif_records)}. Next offset: {current_offset}. End of records: {end_of_records}")
             
             if not end_of_records and len(records_on_page) > 0:
-                 time.sleep(0.5)
+                    time.sleep(0.5)
 
         except requests.exceptions.RequestException as e:
             logger.error(f"Critical extraction error for offset {current_offset}: {e}. Stopping extraction.")
@@ -251,32 +251,30 @@ def run_monarch_etl(target_year=None, target_month=None, target_day=None,
 
 # CHQ: Gemin AI modified the main for the github actions job
 if __name__ == '__main__':
-    # When run by a scheduler, we typically want to process data for the *previous* full day.
-    # If this ETL runs after midnight (e.g., 2 AM), 'yesterday' refers to the day that just completed.
+    # When run by a scheduler, we typically want to process data for the *previous* full month.
+    # This is more likely to yield data than a single day, especially for migratory species.
 
-    # Calculate yesterday's date
-    target_date = datetime.now() - timedelta(days=1)
+    # Calculate the date for the previous month
+    today = datetime.now()
+    # Go back to the first day of the current month, then subtract one day to get to the last day of the previous month
+    first_day_of_current_month = today.replace(day=1)
+    last_day_of_previous_month = first_day_of_current_month - timedelta(days=1)
 
-    logger.info(f"\nRunning ETL for {target_date.year}-{target_date.month}-{target_date.day}")
-    run_monarch_etl(target_year=target_date.year, target_month=target_date.month, target_day=target_date.day)
+    target_year = last_day_of_previous_month.year
+    target_month = last_day_of_previous_month.month
 
-    # If you wanted to fetch for the current day instead (e.g., if running mid-day), you'd use:
-    # today = datetime.now()
-    # run_monarch_etl(target_year=today.year, target_month=today.month, target_day=today.day)
-    # --- ETL Execution Examples ---
+    logger.info(f"\nRunning ETL for {target_year}-{target_month} (entire month)")
+    run_monarch_etl(target_year=target_year, target_month=target_month)
+
+    # --- ETL Execution Examples (for reference) ---
     # Before running, ensure your Neon environment variables are set!
     # e.g., export NEON_DB_HOST="..." etc.
 
-    # Example 1: Fetch data for a specific day (e.g., today)
-    # This is a good way to test without pulling too much data initially.
+    # Example 1: Fetch data for a specific day (e.g., today) - less likely to find data
     # current_date = datetime.now()
     # logger.info(f"\nRunning ETL for {current_date.year}-{current_date.month}-{current_date.day}")
     # run_monarch_etl(target_year=current_date.year, target_month=current_date.month, target_day=current_date.day)
 
-    # Example 2: Fetch data for an entire month (be aware of data volume!)
-    # logger.info("\nRunning ETL for 2024-06 (June 2024) - WARNING: Can be large!")
-    # run_monarch_etl(target_year=2024, target_month=6)
-    
-    # Example 3: Fetch all data for a specific year (POTENTIALLY VERY LARGE - USE WITH CAUTION)
+    # Example 2: Fetch data for an entire year (POTENTIALLY VERY LARGE - USE WITH CAUTION)
     # logger.info("\nRunning ETL for all of 2023 (WARNING: This can be a very large dataset!)")
     # run_monarch_etl(target_year=2023)
