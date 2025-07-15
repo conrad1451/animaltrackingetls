@@ -24,7 +24,9 @@ on:
     # new time of 2:52pm NYC time (1840 UTC) - 1440 + 4h offset
     # - cron: "52 18 * * *"
     # test time of 130am NYC time (530 UTC) - 0130 + 4h offest
-    - cron: "30 5 * * *"
+    # - cron: "30 5 * * *"
+    # test time of 616am NYC time (1016 UTC) - 0616 + 4h offest
+    - cron: "16 10 * * *"
 
 jobs:
   run_etl:
