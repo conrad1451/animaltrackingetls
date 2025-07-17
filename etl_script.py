@@ -1,3 +1,5 @@
+# etl_script.py
+
 import os
 import time
 import logging
@@ -103,7 +105,7 @@ def extract_gbif_data(
     offset = 0
     end_of_records = False
     pages_fetched = 0 # To track how many pages we've actually fetched
-    
+
     params = {
         'taxonKey': taxon_key,
         'country': country,
@@ -478,5 +480,5 @@ if __name__ == '__main__':
     # run_monarch_etl(target_year, target_month)
 
     # You could also set specific dates for testing:
-    # run_monarch_etl(2025, 6) # For June 2025
-    run_monarch_etl(2024, 9) # For Sep 2024
+    run_monarch_etl(2025, 6) # For June 2025
+    # run_monarch_etl(2024, 9) # For Sep 2024
