@@ -102,7 +102,8 @@ def extract_gbif_data(
     all_records = []
     offset = 0
     end_of_records = False
-
+    pages_fetched = 0 # To track how many pages we've actually fetched
+    
     params = {
         'taxonKey': taxon_key,
         'country': country,
