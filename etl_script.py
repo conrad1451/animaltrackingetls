@@ -91,6 +91,8 @@ def extract_gbif_data(
     limit_per_request=300, # GBIF API max limit is 300
     target_year=2025,
     target_month=6,
+    num_pages_to_extract=None,
+    limiting_page_count=None,
     # start_date=None,
     # end_date=None
 ):
@@ -127,6 +129,11 @@ def extract_gbif_data(
     # If no dates, it fetches all available for taxon/country.
 
     while not end_of_records:
+        # CHQ: Gemini AI added logic for breaking out of the loop when num pages is specified and exceeded
+        if num_pages_to_extract is not None and pages_fetched >= num_pages_to_extract:
+            logger.info(f"Reached num_pages_to_extract limit ({num_pages_to_extract}). Stopping extraction.")
+            break
+
         current_params = params.copy()
         current_params['offset'] = offset
         try:
@@ -137,8 +144,16 @@ def extract_gbif_data(
             count = data.get('count', 0)
             end_of_records = data.get('endOfRecords', True)
             offset += len(records) # Use len(records) to correctly advance offset
+            pages_fetched += 1 # Increment page count
 
             logger.info(f"Fetched {len(records)} records. Total: {len(all_records)}. Next offset: {offset}. End of records: {end_of_records}")
+        
+            # CHQ: Gemini AI implemented limiting page count logic    
+            # Implement limiting_page_count logic
+            if limiting_page_count is not None and pages_fetched >= limiting_page_count:
+                logger.info(f"Reached limiting_page_count ({limiting_page_count}). Stopping extraction.")
+                break # Break the loop if the limit is reached
+
 
             # Implement a small delay between GBIF API calls to be polite and avoid rate limits
             if not end_of_records and len(records) > 0:
@@ -428,7 +443,7 @@ def run_monarch_etl(year, month):
     # else:
     #     end_date = datetime(year, month + 1, 1) - timedelta(days=1)
 
-    raw_data = extract_gbif_data(target_year=year, target_month=month)
+    raw_data = extract_gbif_data(target_year=year, target_month=month, limiting_page_count=True, num_pages_to_extract=10)
 
 
     # CHQ: sample hard-coded date
