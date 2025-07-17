@@ -89,8 +89,10 @@ def extract_gbif_data(
     has_coordinate='true',
     has_geospatial_issue='false',
     limit_per_request=300, # GBIF API max limit is 300
-    start_date=None,
-    end_date=None
+    target_year=2025,
+    target_month=6,
+    # start_date=None,
+    # end_date=None
 ):
     """
     Extracts occurrence data from the GBIF API, supporting date range filtering.
@@ -99,7 +101,6 @@ def extract_gbif_data(
     offset = 0
     end_of_records = False
 
-    # Convert start_date and end_date to year and month for GBIF API
     params = {
         'taxonKey': taxon_key,
         'country': country,
@@ -108,9 +109,8 @@ def extract_gbif_data(
         'limit': limit_per_request
     }
 
-    if start_date:
-        params['year'] = start_date.year
-        params['month'] = start_date.month
+    params['year'] = target_year
+    params['month'] = target_month
 
     # Note: GBIF API's year/month filter is for the start of the period.
     # To get data for an entire month, you specify the month.
@@ -421,17 +421,18 @@ def run_monarch_etl(year, month):
 
     logger.info(f"\n\nRunning ETL for {year}-{month} (entire month)\n")
     logger.info("--- ETL process started ---") 
-    start_date = datetime(year, month, 1)
-    # Calculate the last day of the month
-    if month == 12:
-        end_date = datetime(year, 12, 31)
-    else:
-        end_date = datetime(year, month + 1, 1) - timedelta(days=1)
+    # start_date = datetime(year, month, 1)
+    # # Calculate the last day of the month
+    # if month == 12:
+    #     end_date = datetime(year, 12, 31)
+    # else:
+    #     end_date = datetime(year, month + 1, 1) - timedelta(days=1)
 
-    raw_data = extract_gbif_data(
-        start_date=start_date,
-        end_date=end_date # Note: GBIF API's month parameter handles the whole month
-    )
+    raw_data = extract_gbif_data(target_year=year, target_month=month)
+
+
+    # CHQ: sample hard-coded date
+    # raw_data = extract_gbif_data(target_year=2025, target_month=6)
 
     if raw_data:
         transformed_df = transform_gbif_data(raw_data)
