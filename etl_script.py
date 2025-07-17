@@ -211,7 +211,13 @@ def transform_gbif_data(raw_data):
     logger.info(f"After dropping records without valid coordinates: {len(df)} records.")
 
     # 3. Handle 'individualCount': Coerce to numeric, fill NaN with 1
-    df['individualCount'] = pd.to_numeric(df['individualCount'], errors='coerce').fillna(1).astype(int)
+    # --- START FIX ---
+    if 'individualCount' not in df.columns:
+        logger.warning("'individualCount' column not found in GBIF data. Creating with default value 1.")
+        df['individualCount'] = 1
+    else:
+        df['individualCount'] = pd.to_numeric(df['individualCount'], errors='coerce').fillna(1).astype(int)
+    # --- END FIX ---
 
     # --- Enrichment / Feature Engineering ---
     if not df['eventDateParsed'].empty:
