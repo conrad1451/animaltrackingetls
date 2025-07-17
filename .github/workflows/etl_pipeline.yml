@@ -17,10 +17,6 @@ on:
   # Trigger the workflow on a schedule (e.g., daily at 02:00 UTC)
   schedule:
     # Uses cron syntax. Learn more: https://crontab.guru/
-    # Example: "0 2 * * *" means "at 02:00 (2 AM) every day"
-    # Make sure this time makes sense for when the previous day's data is complete.
-    # old time of 2 am UTC
-    # - cron: "0 2 * * *"
     # new time of 2:52pm NYC time (1840 UTC) - 1440 + 4h offset
     # - cron: "52 18 * * *"
     # test time of 130am NYC time (530 UTC) - 0130 + 4h offest
