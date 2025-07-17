@@ -47,7 +47,7 @@ AI_ENDPOINT_BASE_URL = os.getenv('AI_ENDPOINT_BASE_URL')
     )),
     reraise=True
 )
-def fetch_gbif_page_etl(endpoint, params):
+def fetch_gbif_page_etl_old(endpoint, params):
     """
     Fetches a single page of data from the GBIF API with retry logic.
     """
@@ -74,6 +74,43 @@ def fetch_ai_county_city_town_analysis(latitude, longitude, uncertainty):
     response.raise_for_status()
     return response.json()
 
+
+def fetch_gbif_page_etl(endpoint, params):
+    """
+    Fetches a single page of data from the GBIF API with retry logic.
+    """
+    logger.info(f"Attempting to fetch data from: {endpoint} with params: {params}")
+    response = requests.get(endpoint, params=params)
+    response.raise_for_status()
+    return response.json()
+
+
+# This function will now be for batch calls
+@retry(
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    stop=stop_after_attempt(5),
+    retry=retry_if_exception_type((
+        requests.exceptions.ConnectionError,
+        requests.exceptions.Timeout,
+        requests.exceptions.HTTPError
+    )),
+    reraise=True
+)
+def fetch_ai_county_city_town_analysis_batch(batch_of_coordinates):
+    """
+    Sends a batch of coordinates to the AI endpoint and returns the results.
+    """
+    endpoint = f"{AI_ENDPOINT_BASE_URL}/countycityfromcoordinates_batch" # Use the new batch endpoint
+
+    headers = {'Content-Type': 'application/json'}
+    data = json.dumps(batch_of_coordinates) # Send the list of dicts as JSON
+
+    logger.info(f"Attempting to fetch batch data from AI endpoint ({len(batch_of_coordinates)} coordinates).")
+    response = requests.post(endpoint, headers=headers, data=data)
+    response.raise_for_status()
+    return response.json()
+
+# ... (extract_gbif_data function remains the same) ...
  
 # --- Extract Function ---
 def extract_gbif_data(taxon_key=DEFAULT_TAXON_KEY, country_code=DEFAULT_COUNTRY_CODE, **kwargs):
@@ -202,8 +239,6 @@ def transform_gbif_data(raw_data):
         df['date_only'] = pd.NaT
 
     # Define the columns you want in your final dataset.
-    # Ensure 'gbifID' is included as it's a good candidate for a primary key.
-    # GBIF IDs can be very large, so storing as TEXT in PostgreSQL is safest to avoid precision issues.
     final_columns = [
         'gbifID', 'datasetKey', 'datasetName', 'publishingOrgKey', 'publishingOrganizationTitle',
         'eventDate', 'eventDateParsed', 'year', 'month', 'day', 'day_of_week', 'week_of_year', 'date_only',
@@ -213,51 +248,88 @@ def transform_gbif_data(raw_data):
         'individualCount', 'basisOfRecord', 'recordedBy', 'occurrenceID', 'collectionCode', 'catalogNumber',
     ]
 
-    # Select only the columns that exist in the DataFrame
     df_transformed = df[[col for col in final_columns if col in df.columns]].copy()
 
-    # Convert gbifID to string to avoid potential precision loss in large integers when loading to DB
     if 'gbifID' in df_transformed.columns:
         df_transformed['gbifID'] = df_transformed['gbifID'].astype(str)
 
-    # --- Add 'county' and 'cityOrTown' columns using the AI endpoint ---
-    # Initialize 'county' and 'cityOrTown' columns with NaN or None before applying
-    # This ensures the columns exist if the apply function doesn't return them for some rows.
+    # --- Add 'county' and 'cityOrTown' columns using the AI endpoint (BATCHED) ---
     df_transformed['county'] = None
     df_transformed['cityOrTown'] = None
 
-    # Define a helper function to call the AI endpoint for a single row
-    # This function will be applied to each row using df.apply(axis=1)
-    def get_county_city_for_row(row):
+    # Prepare data for batch processing
+    # Filter for rows that have valid coordinates and don't already have county/city (if resuming)
+    coords_to_enrich = df_transformed[
+        df_transformed['decimalLatitude'].notna() &
+        df_transformed['decimalLongitude'].notna()
+        # & (df_transformed['county'].isna() | df_transformed['cityOrTown'].isna()) # Uncomment if you want to resume
+    ].copy() # Use .copy() to avoid SettingWithCopyWarning
+
+    if not coords_to_enrich.empty:
+        # Create a list of dictionaries, each containing the necessary info for the AI endpoint
+        batch_payload = []
+        for _, row in coords_to_enrich.iterrows():
+            uncertainty = row['coordinateUncertaintyInMeters'] if pd.notna(row['coordinateUncertaintyInMeters']) else 0
+            batch_payload.append({
+                "latitude": row['decimalLatitude'],
+                "longitude": row['decimalLongitude'],
+                "coordinate_uncertainty": uncertainty
+            })
+
+        logger.info(f"Sending {len(batch_payload)} coordinates in a batch to AI endpoint for enrichment.")
         try:
-            latitude = row['decimalLatitude']
-            longitude = row['decimalLongitude']
-            uncertainty = row['coordinateUncertaintyInMeters'] if pd.notna(row['coordinateUncertaintyInMeters']) else 0 # Handle potential NaN uncertainty
+            batch_results = fetch_ai_county_city_town_analysis_batch(batch_payload)
 
-            # Only call the AI endpoint if coordinates are valid
-            if pd.notna(latitude) and pd.notna(longitude):
-                result = fetch_ai_county_city_town_analysis(latitude, longitude, uncertainty)
-                row['county'] = result.get('county')
-                row['cityOrTown'] = result.get('city/town')
-                time.sleep(2)
-            else:
-                row['county'] = None
-                row['cityOrTown'] = None
+            # Map the results back to the DataFrame
+            # Create a temporary DataFrame from the results for easy merging/mapping
+            results_df = pd.DataFrame(batch_results)
+            # Ensure latitude and longitude are consistent types for merging if needed
+            results_df['latitude'] = pd.to_numeric(results_df['latitude'], errors='coerce')
+            results_df['longitude'] = pd.to_numeric(results_df['longitude'], errors='coerce')
+
+            # Merge or map results back to the original df_transformed
+            # A common way is to use .set_index and .update or direct assignment if indices match
+            # For simplicity and robustness, let's iterate and update based on original index
+            for result in batch_results:
+                lat = result.get('latitude')
+                lon = result.get('longitude')
+                county = result.get('county')
+                city = result.get('city/town')
+                error = result.get('error')
+
+                # Find the original row(s) in df_transformed that match this lat/lon
+                # This assumes lat/lon pairs are unique enough for identification
+                # If not, you might need a unique ID passed through the batch
+                matching_rows_idx = df_transformed[
+                    (df_transformed['decimalLatitude'] == lat) &
+                    (df_transformed['decimalLongitude'] == lon)
+                ].index
+
+                if not matching_rows_idx.empty:
+                    # Update all matching rows
+                    for idx in matching_rows_idx:
+                        if not error:
+                            df_transformed.at[idx, 'county'] = county
+                            df_transformed.at[idx, 'cityOrTown'] = city
+                        else:
+                            logger.warning(f"Error for Lat: {lat}, Lon: {lon}: {error}")
+                            # You might want to log the error or set specific values for errored rows
+                            df_transformed.at[idx, 'county'] = f"Error: {error}" # Or None
+                            df_transformed.at[idx, 'cityOrTown'] = f"Error: {error}" # Or None
+                else:
+                    logger.warning(f"Could not find matching row in DataFrame for result: {result}")
+
         except Exception as e:
-            logger.warning(f"Failed to get county/city for row (ID: {row.get('gbifID')}, Lat: {latitude}, Lon: {longitude}): {e}")
-            row['county'] = None # Assign None on error
-            row['cityOrTown'] = None # Assign None on error
-        return row # Must return the modified row (as a Series)
+            logger.error(f"Error during batch AI endpoint call: {e}", exc_info=True)
+            # Handle the case where the entire batch call fails
+            # All 'county' and 'cityOrTown' columns for this batch will remain None
 
-    # Apply the function to each row of the DataFrame
-    # This will iterate through each row, call your AI endpoint, and update the 'county' and 'cityOrTown' values
-    logger.info(f"Calling AI endpoint for {len(df_transformed)} records to enrich location data...")
-    df_transformed = df_transformed.apply(get_county_city_for_row, axis=1)
-    logger.info("Finished enriching location data with AI endpoint.")
+    logger.info(f"Finished enriching location data with AI endpoint.")
 
     logger.info(f"Finished transformation. Transformed records: {len(df_transformed)}.")
     return df_transformed
 
+# ... (load_data and run_monarch_etl functions remain the same) ...
 # The transform_add_county_city_town_single_sighting function is no longer needed
 # as its logic is now embedded directly in the .apply() within transform_gbif_data.
 # You can remove it, or keep it if you have other uses for it.
