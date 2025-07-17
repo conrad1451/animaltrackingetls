@@ -22,7 +22,6 @@ logger = logging.getLogger(__name__)
 
 # --- Configuration for ETL ---
 GBIF_BASE_URL = 'https://api.gbif.org/v1'
-
 DEFAULT_TAXON_KEY = '5133088' # Monarch Butterfly
 DEFAULT_COUNTRY_CODE = 'US'
 DEFAULT_LIMIT_PER_PAGE = 300 # GBIF max limit for /occurrence/search is 300, more efficient for ETL
@@ -33,6 +32,9 @@ NEON_DB_NAME = os.getenv('NEON_DB_NAME')
 NEON_DB_USER = os.getenv('NEON_DB_USER')
 NEON_DB_PASSWORD = os.getenv('NEON_DB_PASSWORD')
 NEON_DB_PORT = os.getenv('NEON_DB_PORT', '5432') # Default to 5432 if not set
+
+AI_ENDPOINT_BASE_URL = os.getenv('AI_ENDPOINT_BASE_URL')
+
 
 # --- Retry Decorator for API Calls ---
 @retry(
@@ -54,6 +56,25 @@ def fetch_gbif_page_etl(endpoint, params):
     response.raise_for_status()
     return response.json()
 
+# takes the input latitude, longitude, and location uncertainty for a single sighting
+# and returns the county and city/town that the sighting occured in
+def fetch_ai_county_city_town_analysis(latitude, longitude, uncertainty):
+    endpoint = AI_ENDPOINT_BASE_URL
+
+    the_endpoint = endpoint + "/countycityfromcoordinates?latitude="
+    the_endpoint = the_endpoint + str(latitude) + "&longitude=" + str(longitude) + "&coordinate_uncertainty=" + str(uncertainty)
+    """
+    Fetches a single page of data from the GBIF API with retry logic.
+    """
+    logger.info(f"Attempting to fetch data from: {endpoint}")
+    # logger.info(f"Attempting to fetch data from: {endpoint} with params: {params}")
+    response = requests.get(the_endpoint)
+    # response = requests.get(endpoint, params=params)
+
+    response.raise_for_status()
+    return response.json()
+
+ 
 # --- Extract Function ---
 def extract_gbif_data(taxon_key=DEFAULT_TAXON_KEY, country_code=DEFAULT_COUNTRY_CODE, **kwargs):
     """
@@ -105,6 +126,29 @@ def extract_gbif_data(taxon_key=DEFAULT_TAXON_KEY, country_code=DEFAULT_COUNTRY_
     logger.info(f"Finished extraction. Total raw records extracted: {len(all_gbif_records)}")
     return all_gbif_records
 
+
+# adds the county and city/town that a sighting occured in to the record of the sighting
+# def transform_add_county_city_town_single_sighting(the_transformed_df, the_location_params):
+def transform_add_county_city_town_single_sighting(the_transformed_df, the_index):
+
+    # the_params['decimalLatitude'] = 0
+    # the_params['decimalLongitude'] = 0
+    # the_params['coordinateUncertaintyInMeters'] = 0
+
+    # the_transformed_df[]
+
+    x=the_index
+
+    df = the_transformed_df
+ 
+    county_and_city_for_single_sighting = fetch_ai_county_city_town_analysis(df.at[x, 'decimalLatitude'], df.at[x, 'decimalLongitude'], df.at[x, 'coordinateUncertaintyInMeters'])
+    
+    the_transformed_df['county'][x] = county_and_city_for_single_sighting['county']
+    the_transformed_df['cityOrTown'][x] = county_and_city_for_single_sighting['city/town']
+
+    return the_transformed_df
+
+# CHQ: Gemini AI debugged this function and added helper function
 # --- Transform Function ---
 def transform_gbif_data(raw_data):
     """
@@ -115,7 +159,7 @@ def transform_gbif_data(raw_data):
         return pd.DataFrame()
 
     logger.info(f"Starting transformation of {len(raw_data)} records.")
-    
+
     df = pd.DataFrame(raw_data)
 
     # 1. Robust Date Parsing for 'eventDate'
@@ -127,7 +171,7 @@ def transform_gbif_data(raw_data):
                 df.at[index, 'eventDateParsed'] = parse_date(date_str)
             except (ValueError, TypeError) as e:
                 logger.debug(f"Could not parse eventDate '{date_str}' at index {index}. Error: {e}")
-        
+
     df.dropna(subset=['eventDateParsed'], inplace=True)
     logger.info(f"After date parsing: {len(df)} records.")
 
@@ -157,28 +201,67 @@ def transform_gbif_data(raw_data):
         df['week_of_year'] = pd.NA
         df['date_only'] = pd.NaT
 
-    # --- Select and Reorder Relevant Columns ---
     # Define the columns you want in your final dataset.
-    # IMPORTANT: Ensure 'gbifID' is included as it's a good candidate for a primary key.
+    # Ensure 'gbifID' is included as it's a good candidate for a primary key.
     # GBIF IDs can be very large, so storing as TEXT in PostgreSQL is safest to avoid precision issues.
     final_columns = [
         'gbifID', 'datasetKey', 'datasetName', 'publishingOrgKey', 'publishingOrganizationTitle',
         'eventDate', 'eventDateParsed', 'year', 'month', 'day', 'day_of_week', 'week_of_year', 'date_only',
         'scientificName', 'vernacularName', 'taxonKey', 'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species',
         'decimalLatitude', 'decimalLongitude', 'coordinateUncertaintyInMeters',
-        'countryCode', 'stateProvince', 'county', 'locality',
-        'individualCount', 'basisOfRecord', 'recordedBy', 'occurrenceID', 'collectionCode', 'catalogNumber'
+        'countryCode', 'stateProvince', 'locality', # 'county' and 'cityOrTown' will be added later
+        'individualCount', 'basisOfRecord', 'recordedBy', 'occurrenceID', 'collectionCode', 'catalogNumber',
     ]
-    
+
+    # Select only the columns that exist in the DataFrame
     df_transformed = df[[col for col in final_columns if col in df.columns]].copy()
-    
+
     # Convert gbifID to string to avoid potential precision loss in large integers when loading to DB
     if 'gbifID' in df_transformed.columns:
         df_transformed['gbifID'] = df_transformed['gbifID'].astype(str)
 
+    # --- Add 'county' and 'cityOrTown' columns using the AI endpoint ---
+    # Initialize 'county' and 'cityOrTown' columns with NaN or None before applying
+    # This ensures the columns exist if the apply function doesn't return them for some rows.
+    df_transformed['county'] = None
+    df_transformed['cityOrTown'] = None
+
+    # Define a helper function to call the AI endpoint for a single row
+    # This function will be applied to each row using df.apply(axis=1)
+    def get_county_city_for_row(row):
+        try:
+            latitude = row['decimalLatitude']
+            longitude = row['decimalLongitude']
+            uncertainty = row['coordinateUncertaintyInMeters'] if pd.notna(row['coordinateUncertaintyInMeters']) else 0 # Handle potential NaN uncertainty
+
+            # Only call the AI endpoint if coordinates are valid
+            if pd.notna(latitude) and pd.notna(longitude):
+                result = fetch_ai_county_city_town_analysis(latitude, longitude, uncertainty)
+                row['county'] = result.get('county')
+                row['cityOrTown'] = result.get('city/town')
+            else:
+                row['county'] = None
+                row['cityOrTown'] = None
+        except Exception as e:
+            logger.warning(f"Failed to get county/city for row (ID: {row.get('gbifID')}, Lat: {latitude}, Lon: {longitude}): {e}")
+            row['county'] = None # Assign None on error
+            row['cityOrTown'] = None # Assign None on error
+        return row # Must return the modified row (as a Series)
+
+    # Apply the function to each row of the DataFrame
+    # This will iterate through each row, call your AI endpoint, and update the 'county' and 'cityOrTown' values
+    logger.info(f"Calling AI endpoint for {len(df_transformed)} records to enrich location data...")
+    df_transformed = df_transformed.apply(get_county_city_for_row, axis=1)
+    logger.info("Finished enriching location data with AI endpoint.")
+
     logger.info(f"Finished transformation. Transformed records: {len(df_transformed)}.")
     return df_transformed
 
+# The transform_add_county_city_town_single_sighting function is no longer needed
+# as its logic is now embedded directly in the .apply() within transform_gbif_data.
+# You can remove it, or keep it if you have other uses for it.
+# If keeping it, note that it expects 'the_index', but the apply function works on rows.
+# So, it's better to just embed the logic directly as shown above.
 # --- Load Function (to Neon PostgreSQL) ---
 def load_data(transformed_data_df, table_name='monarch_sightings'):
     """
