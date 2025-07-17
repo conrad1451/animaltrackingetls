@@ -239,6 +239,7 @@ def transform_gbif_data(raw_data):
                 result = fetch_ai_county_city_town_analysis(latitude, longitude, uncertainty)
                 row['county'] = result.get('county')
                 row['cityOrTown'] = result.get('city/town')
+                time.sleep(2)
             else:
                 row['county'] = None
                 row['cityOrTown'] = None
