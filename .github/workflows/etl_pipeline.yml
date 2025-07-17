@@ -27,7 +27,7 @@ on:
     # - cron: "30 5 * * *"
     # test time of 640am NYC time (1040 UTC) - 0640 + 4h offest
     - cron: "40 10 * * *"
-
+    # - cron: "0 0 * * 0"  # Runs every Sunday at midnight UTC # Google Search (can you make a yaml file run a job monthly?)
 jobs:
   run_etl:
     runs-on: ubuntu-latest # Use a fresh Ubuntu runner for each job
@@ -39,6 +39,7 @@ jobs:
       NEON_DB_USER: ${{ secrets.NEON_DB_USER }}
       NEON_DB_PASSWORD: ${{ secrets.NEON_DB_PASSWORD }}
       NEON_DB_PORT: ${{ secrets.NEON_DB_PORT }}
+      AI_ENDPOINT_BASE_URL: ${{ secrets.AI_ENDPOINT_BASE_URL  }}
 
     steps:
       - name: Checkout code
