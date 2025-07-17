@@ -7,6 +7,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from dateutil.parser import parse as parse_date
 from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
+import calendar
 
 # --- Configure Logging ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -401,8 +402,7 @@ def run_monarch_etl(year, month):
     Orchestrates the ETL process for Monarch Butterfly data for a given month and year.
     """
     logger.info(f"\n\nRunning ETL for {year}-{month} (entire month)\n")
-    logger.info("--- ETL process started ---")
-
+    logger.info("--- ETL process started ---") 
     start_date = datetime(year, month, 1)
     # Calculate the last day of the month
     if month == 12:
@@ -418,7 +418,7 @@ def run_monarch_etl(year, month):
     if raw_data:
         transformed_df = transform_gbif_data(raw_data)
         if not transformed_df.empty:
-            load_data(transformed_df)
+            load_data(transformed_df, calendar.month_name[target_month] + " " + str(target_year))
         else:
             logger.info("Transformed DataFrame is empty. No data to load.")
     else:
