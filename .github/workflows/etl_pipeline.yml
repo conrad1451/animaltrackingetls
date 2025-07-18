@@ -53,7 +53,17 @@ jobs:
           pip install -r requirements.txt # Install all libraries listed in requirements.txt
 
       - name: Run ETL Script
-        run: python etl_script.py # Execute your ETL script
+        id: run_script # Add an ID to this step to reference its output
+        run: python etl_script.py 2>&1 | tee etl_output.log # Capture output to a log file
+
+      - name: Check ETL Results for Data Loading Success
+        run: |
+          if grep -q "No data to load as DataFrame is empty" etl_output.log; then
+            echo "::error::ETL run considered a failure: No data was loaded into the database."
+            exit 1 # Exit with a non-zero status to mark the job as failed
+          else
+            echo "ETL run completed with data loaded (or no 'no data' warning found)."
+          fi
 
       - name: Check for new data
         # (Optional: for debugging)
