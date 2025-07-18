@@ -56,6 +56,7 @@ jobs:
         id: run_script # Add an ID to this step to reference its output
         run: python etl_script.py 2>&1 | tee etl_output.log # Capture output to a log file
 
+        # CHQ: step added by Gemini AI
       - name: Check ETL Results for Data Loading Success
         run: |
           if grep -q "No data to load as DataFrame is empty" etl_output.log; then
