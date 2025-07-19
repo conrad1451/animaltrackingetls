@@ -1,0 +1,60 @@
+# .github/workflows/etl_pipeline_gcp.yml
+
+name: Monarch ETL Pipeline to GCP
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "etl_script.py"
+      - "requirements.txt"
+      - ".github/workflows/etl_pipeline.yml"
+
+  schedule:
+    - cron: "40 18 * * *" # 2:40 PM NYC time / 18:40 UTC
+
+jobs:
+  run_etl:
+    runs-on: ubuntu-latest
+
+    # Set GCP environment variables from GitHub Secrets
+    env:
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      GCS_BUCKET_NAME: ${{ secrets.GCS_BUCKET_NAME }}
+      GCP_REGION: ${{ secrets.GCP_REGION }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        # This action sets up GOOGLE_APPLICATION_CREDENTIALS for subsequent steps
+        id: "auth"
+        uses: "google-github-actions/auth@v2"
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9" # Or your preferred Python version
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run ETL Script
+        run: python etl_script.py
+
+      - name: Verify BigQuery Table (Optional, requires GCP CLI)
+        # This step is for advanced debugging/verification
+        # You'd need to install GCP CLI and configure it within the action.
+        # For initial verification, checking in GCP Console is sufficient.
+        run: |
+          echo "ETL script finished. Check GCS bucket for Parquet files and BigQuery for table data."
+          # Example: List GCS objects
+          # gsutil ls gs://${{ env.GCS_BUCKET_NAME }}/monarch_sightings/
+          # Example: Get BigQuery table info
+          # bq show --schema --format=json ${{ env.GCP_PROJECT_ID }}:${{ env.BQ_DATASET_NAME }}.${{ env.BQ_TABLE_NAME }}
