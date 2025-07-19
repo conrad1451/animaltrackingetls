@@ -93,6 +93,8 @@ def extract_gbif_data(
     limit_per_request=300, # GBIF API max limit is 300
     target_year=2025,
     target_month=6,
+    whole_month = True, 
+    target_day=1,
     num_pages_to_extract=None,
     limiting_page_count=None,
     # start_date=None,
@@ -116,6 +118,10 @@ def extract_gbif_data(
 
     params['year'] = target_year
     params['month'] = target_month
+
+    if not whole_month:
+        params['day'] = target_day
+        
 
     # Note: GBIF API's year/month filter is for the start of the period.
     # To get data for an entire month, you specify the month.
@@ -454,7 +460,57 @@ def run_monarch_etl(year, month):
     # else:
     #     end_date = datetime(year, month + 1, 1) - timedelta(days=1)
 
-    raw_data = extract_gbif_data(target_year=year, target_month=month, limiting_page_count=True, num_pages_to_extract=10)
+    raw_data = extract_gbif_data(target_year=year, target_month=month, whole_month=True, limiting_page_count=True, num_pages_to_extract=10)
+
+
+    # CHQ: sample hard-coded date
+    # raw_data = extract_gbif_data(target_year=2025, target_month=6)
+
+    if raw_data:
+        transformed_df = transform_gbif_data(raw_data)
+        if not transformed_df.empty:
+            load_data(transformed_df, my_calendar[target_month] + " " + str(target_year))
+            # load_data(transformed_df, calendar.month_name[target_month] + " " + str(target_year))
+        else:
+            logger.info("Transformed DataFrame is empty. No data to load.")
+    else:
+        logger.info("No raw data extracted. ETL process aborted.")
+
+    logger.info("--- ETL process finished ---")
+
+# --- Main ETL Orchestration Function ---
+def run_monarch_etl_alt(year, month, day):
+    """
+    Orchestrates the ETL process for Monarch Butterfly data for a given month and year.
+    """
+
+
+    my_calendar ={
+        1: "January",
+        2: "February",
+        3: "March",
+        4: "April",
+        5: "May",
+        6: "June",
+        7: "July",
+        8: "August",
+        9: "September",
+        10: "October",
+        11: "Novemeber",
+        12: "December",
+    }
+
+
+    logger.info(f"\n\nRunning ETL for {year}-{month}-{day} \n")
+    logger.info("--- ETL process started ---") 
+    # start_date = datetime(year, month, 1)
+    # # Calculate the last day of the month
+    # if month == 12:
+    #     end_date = datetime(year, 12, 31)
+    # else:
+    #     end_date = datetime(year, month + 1, 1) - timedelta(days=1)
+
+    raw_data = extract_gbif_data(target_year=year, target_month=month, whole_month = False, target_day=30, limiting_page_count=True, num_pages_to_extract=10)
 
 
     # CHQ: sample hard-coded date
