@@ -66,21 +66,21 @@ jobs:
             echo "ETL run completed with data loaded (or no 'no data' warning found)."
           fi
 
-      - name: Check ETL Results for properly loaded records from API endpoint
-        run: |
-          if grep "Error for record at original index" etl_output.log; then
-            echo "::error::ETL run considered a failure: Error for a record."
-            exit 1 # Exit with a non-zero status to mark the job as failed
-          else
-            echo "ETL run completed with records loaded (or no 'no data' warning found)."
-          fi
-        # run: |
-        #   if grep -q "Error for record at original index" etl_output.log; then
-        #     echo "::error::ETL run considered a failure: No data was loaded into the database."
-        #     exit 1 # Exit with a non-zero status to mark the job as failed
-        #   else
-        #     echo "ETL run completed with data loaded (or no 'no data' warning found)."
-        #   fi
+      # - name: Check ETL Results for properly loaded records from API endpoint
+      #   run: |
+      #     if grep "Error for record at original index" etl_output.log; then
+      #       echo "::error::ETL run considered a failure: Error for a record."
+      #       exit 1 # Exit with a non-zero status to mark the job as failed
+      #     else
+      #       echo "ETL run completed with records loaded (or no 'no data' warning found)."
+      #     fi
+      # run: |
+      #   if grep -q "Error for record at original index" etl_output.log; then
+      #     echo "::error::ETL run considered a failure: No data was loaded into the database."
+      #     exit 1 # Exit with a non-zero status to mark the job as failed
+      #   else
+      #     echo "ETL run completed with data loaded (or no 'no data' warning found)."
+      #   fi
 
       - name: Check for new data
         # (Optional: for debugging)
