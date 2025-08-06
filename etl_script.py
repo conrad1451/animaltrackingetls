@@ -282,15 +282,19 @@ def transform_gbif_data(raw_data):
                 "coordinate_uncertainty": uncertainty
             })
 
-        logger.info(f"Sending {len(batch_payload)} coordinates in a batch to AI endpoint for enrichment.")
+        selected_batch_payload_size = len(batch_payload)
+
+        logger.info(f"Sending {selected_batch_payload_size} coordinates in a batch to AI endpoint for enrichment.")
         # BATCH_SIZE = 100 # Adjust based on your AI endpoint's capacity and Gemini's rate limits
         # BATCH_SIZE = 4 # Adjust based on your AI endpoint's capacity and Gemini's rate limits
-        BATCH_SIZE = 20 # Adjust based on your AI endpoint's capacity and Gemini's rate limits
+        # BATCH_SIZE = 20 # Adjust based on your AI endpoint's capacity and Gemini's rate limits
+        BATCH_SIZE = 12 # Adjust based on your AI endpoint's capacity and Gemini's rate limits
 
         all_batch_results = []
 
+
         # Iterate through batch_payload in chunks
-        for i in range(0, len(batch_payload), BATCH_SIZE):
+        for i in range(0, selected_batch_payload_size, BATCH_SIZE):
             current_chunk = batch_payload[i : i + BATCH_SIZE]
             try:
                 chunk_results = fetch_ai_county_city_town_analysis_batch(current_chunk)
@@ -299,7 +303,7 @@ def transform_gbif_data(raw_data):
                 # Introduce a small delay between *chunks* of batch calls to prevent overloading
                 # your AI server or hitting its concurrent request limits.
                 # This is separate from any internal delays the AI server might have.
-                if i + BATCH_SIZE < len(batch_payload):
+                if i + BATCH_SIZE < selected_batch_payload_size:
                     time.sleep(0.5) # Wait 0.5 seconds between batches
 
             except requests.exceptions.HTTPError as e:
