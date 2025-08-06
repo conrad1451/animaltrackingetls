@@ -95,7 +95,7 @@ def extract_gbif_data(
     target_year=2025,
     target_month=6,
     whole_month = True, 
-    target_day=1,
+    target_day=10,
     num_pages_to_extract=None,
     limiting_page_count=None,
     # start_date=None,
