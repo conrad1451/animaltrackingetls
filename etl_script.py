@@ -510,7 +510,7 @@ def run_monarch_etl_alt(year, month, day):
     # else:
     #     end_date = datetime(year, month + 1, 1) - timedelta(days=1)
 
-    raw_data = extract_gbif_data(target_year=year, target_month=month, whole_month = False, target_day=30, limiting_page_count=True, num_pages_to_extract=10)
+    raw_data = extract_gbif_data(target_year=year, target_month=month, whole_month = False, target_day=day, limiting_page_count=True, num_pages_to_extract=10)
 
 
     # CHQ: sample hard-coded date
@@ -546,5 +546,6 @@ if __name__ == '__main__':
     # You could also set specific dates for testing:
     # run_monarch_etl(2025, 6) # For June 2025
 
-    run_monarch_etl(2025, 5) # For May 2025
+    # run_monarch_etl(2025, 5) # For May 2025
     # run_monarch_etl(2024, 9) # For Sep 2024
+    run_monarch_etl_alt(2025, 6, 30) # For Jun 30 2025
