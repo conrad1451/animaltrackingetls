@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from dateutil.parser import parse as parse_date
 from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
 # import calendar
+import math
 
 # --- Configure Logging ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -282,7 +283,7 @@ def transform_gbif_data(raw_data):
                 "coordinate_uncertainty": uncertainty
             })
 
-        selected_batch_payload_size = len(batch_payload)
+        selected_batch_payload_size = max(math.ceil(len(batch_payload)/10), 1)
 
         logger.info(f"Sending {selected_batch_payload_size} coordinates in a batch to AI endpoint for enrichment.")
         # BATCH_SIZE = 100 # Adjust based on your AI endpoint's capacity and Gemini's rate limits
