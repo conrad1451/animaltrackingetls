@@ -197,6 +197,8 @@ def transform_gbif_data(raw_data):
 
     df = pd.DataFrame(raw_data)
 
+    of_minutes = 60
+
     # 1. Robust Date Parsing for 'eventDate'
     df['eventDateParsed'] = pd.NaT
     for index, row in df.iterrows():
@@ -305,7 +307,9 @@ def transform_gbif_data(raw_data):
                 # your AI server or hitting its concurrent request limits.
                 # This is separate from any internal delays the AI server might have.
                 if i + BATCH_SIZE < selected_batch_payload_size:
-                    time.sleep(0.5) # Wait 0.5 seconds between batches
+                    # time.sleep(0.5) # Wait 0.5 seconds between batches
+                    time.sleep(1.2*of_minutes) # Wait 1.2 minutes between batches
+
 
             except requests.exceptions.HTTPError as e:
                 logger.error(f"HTTP error during batch AI endpoint call for chunk starting at index {i}: {e.response.status_code} - {e.response.text}")
