@@ -60,6 +60,16 @@ jobs:
         run: python monarch_etl_gemini_ai.py 2>&1 | tee etl_output.log # Capture output to a log file
 
         # CHQ: step added by Gemini AI
+      - name: Validate Batch Coordinates Type
+        run: |
+          if grep -q "::error::The output of 'produce_batch_coordinates' is not a list." etl_output.log; then
+            echo "Type validation failed. The 'produce_batch_coordinates' function returned an invalid type."
+            exit 1
+          else
+            echo "Type validation passed. The 'produce_batch_coordinates' function returned a list."
+          fi
+
+        # CHQ: step added by Gemini AI
       - name: Check ETL Results for Data Loading Success
         run: |
           if grep -q "No data to load as DataFrame is empty" etl_output.log; then

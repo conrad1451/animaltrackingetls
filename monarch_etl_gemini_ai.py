@@ -344,6 +344,13 @@ def attach_city_county_info(the_df):
 
         all_batch_results = produce_batch_coordinates(batch_payload, BATCH_SIZE, selected_batch_payload_size)
 
+        # CHQ: Gemini AI added check
+        # Check if the output is a list and fail if not
+        if not isinstance(all_batch_results, list):
+            # Print a specific error message that the workflow can grep for
+            print("::error::The output of 'produce_batch_coordinates' is not a list.")
+            raise TypeError("The output of 'produce_batch_coordinates' must be a list.")
+  
         # Map the results back to the DataFrame using the original index
         for result in all_batch_results:
             original_idx = result.get('gbifID_original_index')
