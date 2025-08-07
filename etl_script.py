@@ -285,7 +285,8 @@ def transform_gbif_data(raw_data):
                 "coordinate_uncertainty": uncertainty
             })
 
-        selected_batch_payload_size = max(math.ceil(len(batch_payload)/10), 1)
+        # selected_batch_payload_size = max(math.ceil(len(batch_payload)/10), 1)
+        selected_batch_payload_size = batch_payload
 
         logger.info(f"Sending {selected_batch_payload_size} coordinates in a batch to AI endpoint for enrichment.")
         # BATCH_SIZE = 100 # Adjust based on your AI endpoint's capacity and Gemini's rate limits
@@ -489,55 +490,41 @@ def run_monarch_etl(year, month):
     logger.info("--- ETL process finished ---")
 
 # --- Main ETL Orchestration Function ---
+# --- Main ETL Orchestration Function ---
 def run_monarch_etl_alt(year, month, day):
     """
     Orchestrates the ETL process for Monarch Butterfly data for a given month and year.
     """
 
-
-    my_calendar ={
-        1: "January",
-        2: "February",
-        3: "March",
-        4: "April",
-        5: "May",
-        6: "June",
-        7: "July",
-        8: "August",
-        9: "September",
-        10: "October",
-        11: "Novemeber",
-        12: "December",
+    my_calendar = {
+        1: "January", 2: "February", 3: "March", 4: "April", 5: "May", 6: "June",
+        7: "July", 8: "August", 9: "September", 10: "October", 11: "Novemeber", 12: "December",
     }
 
-
     logger.info(f"\n\nRunning ETL for {year}-{month}-{day} \n")
-    logger.info("--- ETL process started ---") 
-    # start_date = datetime(year, month, 1)
-    # # Calculate the last day of the month
-    # if month == 12:
-    #     end_date = datetime(year, 12, 31)
-    # else:
-    #     end_date = datetime(year, month + 1, 1) - timedelta(days=1)
+    logger.info("--- ETL process started ---")
 
-    raw_data = extract_gbif_data(target_year=year, target_month=month, whole_month = False, target_day=day, limiting_page_count=True, num_pages_to_extract=10)
-
-
-    # CHQ: sample hard-coded date
-    # raw_data = extract_gbif_data(target_year=2025, target_month=6)
+    raw_data = extract_gbif_data(
+        target_year=year,
+        target_month=month,
+        whole_month=False,
+        target_day=day,
+        limiting_page_count=True,
+        num_pages_to_extract=10
+    )
 
     if raw_data:
         transformed_df = transform_gbif_data(raw_data)
         if not transformed_df.empty:
-            load_data(transformed_df, my_calendar[target_month] + " " + str(target_year))
-            # load_data(transformed_df, calendar.month_name[target_month] + " " + str(target_year))
+            # Corrected line: pass the variables directly to the table name string
+            table_name = f"{my_calendar[month]} {day} {year}" 
+            load_data(transformed_df, table_name)
         else:
             logger.info("Transformed DataFrame is empty. No data to load.")
     else:
         logger.info("No raw data extracted. ETL process aborted.")
 
     logger.info("--- ETL process finished ---")
-
 
 if __name__ == '__main__':
     # --- Example Usage for a specific month (e.g., June 2025) ---
