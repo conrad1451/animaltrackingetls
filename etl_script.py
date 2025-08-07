@@ -286,7 +286,7 @@ def transform_gbif_data(raw_data):
             })
 
         # selected_batch_payload_size = max(math.ceil(len(batch_payload)/10), 1)
-        selected_batch_payload_size = batch_payload
+        selected_batch_payload_size = len(batch_payload)
 
         logger.info(f"Sending {selected_batch_payload_size} coordinates in a batch to AI endpoint for enrichment.")
         # BATCH_SIZE = 100 # Adjust based on your AI endpoint's capacity and Gemini's rate limits
