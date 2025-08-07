@@ -10,7 +10,7 @@ on:
     branches:
       - main
     paths:
-      - "etl_script.py"
+      - "monarch_etl_gemini_ai.py"
       - "requirements.txt"
       - ".github/workflows/etl_pipeline.yml" # Rerun if workflow itself changes
 
@@ -57,7 +57,7 @@ jobs:
 
       - name: Run ETL Script
         id: run_script # Add an ID to this step to reference its output
-        run: python etl_script.py 2>&1 | tee etl_output.log # Capture output to a log file
+        run: python monarch_etl_gemini_ai.py 2>&1 | tee etl_output.log # Capture output to a log file
 
         # CHQ: step added by Gemini AI
       - name: Check ETL Results for Data Loading Success
