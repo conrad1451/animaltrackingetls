@@ -33,7 +33,9 @@ NEON_DB_PORT = os.getenv('NEON_DB_PORT', '5432')
 # Ensure this environment variable is set in your GitHub Actions secrets or local environment
 AI_ENDPOINT_BASE_URL = os.getenv('AI_ENDPOINT_BASE_URL')
 
-
+REVERSE_GEOCACHE_API_BASE = os.getenv('REVERSE_GEOCACHE_API_BASE')
+REVERSE_GEOCACHE_API_KEY = os.getenv('REVERSE_GEOCACHE_API_KEY')
+ 
 # --- Utility Functions ---
 
 @retry(
@@ -71,17 +73,46 @@ def fetch_ai_county_city_town_analysis_batch(batch_of_coordinates):
     Sends a batch of coordinates to the AI endpoint for county/city analysis
     and returns the results.
     """
-    if not AI_ENDPOINT_BASE_URL:
-        raise ValueError("AI_ENDPOINT_BASE_URL environment variable is not set.")
+    if not REVERSE_GEOCACHE_API_BASE:
+        raise ValueError("REVERSE_GEOCACHE_API_BASE environment variable is not set.")
 
     # Use the new batch endpoint
-    endpoint = f"{AI_ENDPOINT_BASE_URL}/countycityfromcoordinates_batch"
+    endpoint = f"{REVERSE_GEOCACHE_API_BASE}/part-of?lon=-118.2437&lat=34.0522&geometry=geometry_1000&apiKey={REVERSE_GEOCACHE_API_KEY}"
 
     headers = {'Content-Type': 'application/json'}
     data = json.dumps(batch_of_coordinates) # Send the list of dicts as JSON payload
 
     logger.info(f"Attempting to fetch batch data from AI endpoint for {len(batch_of_coordinates)} coordinates.")
-    response = requests.post(endpoint, headers=headers, data=data, timeout=60) # Add a timeout for safety
+    # response = requests.get(endpoint, headers=headers, data=data, timeout=60) # Add a timeout for safety
+    response = requests.get(endpoint, timeout=60) # Add a timeout for safety
+    response.raise_for_status() # Raise HTTPError for bad responses (e.g., 400, 500)
+    return response.json()
+
+
+@retry(
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    stop=stop_after_attempt(5),
+    retry=retry_if_exception_type((
+        requests.exceptions.ConnectionError,
+        requests.exceptions.Timeout,
+        requests.exceptions.HTTPError # This includes 4xx and 5xx errors from the AI server
+    )),
+    reraise=True # Re-raise the last exception after retries are exhausted
+)
+def fetch_county_city_town_analysis_single(latitude, longitude):
+    """
+    Sends a pair of coordinates to the AI endpoint for county/city analysis
+    and returns the resulting data object.
+    """
+    if not REVERSE_GEOCACHE_API_BASE:
+        raise ValueError("REVERSE_GEOCACHE_API_BASE environment variable is not set.")
+
+    # Use the new batch endpoint
+    endpoint = f"{REVERSE_GEOCACHE_API_BASE}/part-of?lon={longitude}&lat={latitude}&geometry=geometry_1000&apiKey={REVERSE_GEOCACHE_API_KEY}"
+ 
+    logger.info(f"Attempting to fetch city and state for {longitude}&lat={latitude} coordinates.")
+    # response = requests.get(endpoint, headers=headers, data=data, timeout=60) # Add a timeout for safety
+    response = requests.get(endpoint, timeout=60) # Add a timeout for safety
     response.raise_for_status() # Raise HTTPError for bad responses (e.g., 400, 500)
     return response.json()
 
@@ -204,8 +235,261 @@ def extract_gbif_data(
     logger.info(f"Finished extraction. Total raw records extracted: {len(all_records)}")
     return all_records
 
+def clean_data(df):
+
+    # 1. Robust Date Parsing for 'eventDate'
+    df['eventDateParsed'] = pd.NaT
+    for index, row in df.iterrows():
+        date_str = row.get('eventDate')
+        if date_str:
+            try:
+                df.at[index, 'eventDateParsed'] = parse_date(date_str)
+            except (ValueError, TypeError) as e:
+                logger.debug(f"Could not parse eventDate '{date_str}' at index {index}. Error: {e}")
+
+    df.dropna(subset=['eventDateParsed'], inplace=True)
+    logger.info(f"After date parsing: {len(df)} records.")
+
+    # 2. Convert coordinates to numeric, coercing errors to NaN
+    df['decimalLatitude'] = pd.to_numeric(df['decimalLatitude'], errors='coerce')
+    df['decimalLongitude'] = pd.to_numeric(df['decimalLongitude'], errors='coerce')
+
+    df.dropna(subset=['decimalLatitude', 'decimalLongitude'], inplace=True)
+    logger.info(f"After dropping records without valid coordinates: {len(df)} records.")
+
+    # 3. Handle 'individualCount': Coerce to numeric, fill NaN with 1
+    # --- START FIX ---
+    if 'individualCount' not in df.columns:
+        logger.warning("'individualCount' column not found in GBIF data. Creating with default value 1.")
+        df['individualCount'] = 1
+    else:
+        df['individualCount'] = pd.to_numeric(df['individualCount'], errors='coerce').fillna(1).astype(int)
+    # --- END FIX ---
+
+    # --- Enrichment / Feature Engineering ---
+    if not df['eventDateParsed'].empty:
+        df['year'] = df['eventDateParsed'].dt.year
+        df['month'] = df['eventDateParsed'].dt.month
+        df['day'] = df['eventDateParsed'].dt.day
+        df['day_of_week'] = df['eventDateParsed'].dt.dayofweek
+        df['week_of_year'] = df['eventDateParsed'].dt.isocalendar().week.astype(int)
+        df['date_only'] = df['eventDateParsed'].dt.date
+    else:
+        df['year'] = pd.NA
+        df['month'] = pd.NA
+        df['day'] = pd.NA
+        df['day_of_week'] = pd.NA
+        df['week_of_year'] = pd.NA
+        df['date_only'] = pd.NaT
+
+    # Define the columns you want in your final dataset.
+    final_columns = [
+        'gbifID', 'datasetKey', 'datasetName', 'publishingOrgKey', 'publishingOrganizationTitle',
+        'eventDate', 'eventDateParsed', 'year', 'month', 'day', 'day_of_week', 'week_of_year', 'date_only',
+        'scientificName', 'vernacularName', 'taxonKey', 'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species',
+        'decimalLatitude', 'decimalLongitude', 'coordinateUncertaintyInMeters',
+        'countryCode', 'stateProvince', 'locality', # 'county' and 'cityOrTown' will be added later
+        'individualCount', 'basisOfRecord', 'recordedBy', 'occurrenceID', 'collectionCode', 'catalogNumber',
+    ]
+
+    # Select only the columns that exist in the DataFrame
+    df_transformed = df[[col for col in final_columns if col in df.columns]].copy()
+
+    # Convert gbifID to string to avoid potential precision loss in large integers when loading to DB
+    if 'gbifID' in df_transformed.columns:
+        df_transformed['gbifID'] = df_transformed['gbifID'].astype(str)
+
+    # --- Add 'county' and 'cityOrTown' columns using the AI endpoint (BATCHED) ---
+    df_transformed['county'] = None
+    df_transformed['cityOrTown'] = None
+
+    return df_transformed
+
+def produce_batch_coordinates(the_batch_payload, the_batch_size, the_selected_batch_payload_size):
+    of_minutes = 60
+
+    all_batch_results = []
+
+    batch_size = the_batch_size
+
+    # Iterate through batch_payload in chunks
+    for i in range(0, the_selected_batch_payload_size, batch_size):
+        current_chunk = the_batch_payload[i : i + batch_size]
+        try:
+            chunk_results = fetch_ai_county_city_town_analysis_batch(current_chunk)
+            all_batch_results.extend(chunk_results)
+            logger.info(f"Processed batch {i // batch_size + 1}. Total results collected: {len(all_batch_results)}")
+            # Introduce a small delay between *chunks* of batch calls to prevent overloading
+            # your AI server or hitting its concurrent request limits.
+            # This is separate from any internal delays the AI server might have.
+            if i + batch_size < the_selected_batch_payload_size:
+                # time.sleep(0.5) # Wait 0.5 seconds between batches
+                time.sleep(1.2*of_minutes) # Wait 1.2 minutes between batches
+
+
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"HTTP error during batch AI endpoint call for chunk starting at index {i}: {e.response.status_code} - {e.response.text}")
+            # Log the error, but try to continue with other chunks if possible
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Network error during batch AI endpoint call for chunk starting at index {i}: {e}")
+        except Exception as e:
+            logger.error(f"An unexpected error occurred during batch AI endpoint call for chunk starting at index {i}: {e}", exc_info=True)
+
+    return all_batch_results
+
+ 
+
+def run_batch_analysis(the_df, coords_to_enrich):
+    df_transformed = the_df
+    batch_payload = []
+    for index, row in coords_to_enrich.iterrows():
+        uncertainty = row['coordinateUncertaintyInMeters'] if pd.notna(row['coordinateUncertaintyInMeters']) else 0
+        batch_payload.append({
+            "gbifID_original_index": index, # Pass the original DataFrame index to map back
+            "latitude": row['decimalLatitude'],
+            "longitude": row['decimalLongitude'],
+            "coordinate_uncertainty": uncertainty
+        })
+
+    # selected_batch_payload_size = max(math.ceil(len(batch_payload)/10), 1)
+    selected_batch_payload_size = len(batch_payload)
+
+    logger.info(f"Sending {selected_batch_payload_size} coordinates in a batch to AI endpoint for enrichment.")
+    # BATCH_SIZE = 100 # Adjust based on your AI endpoint's capacity and Gemini's rate limits
+    # BATCH_SIZE = 4 # Adjust based on your AI endpoint's capacity and Gemini's rate limits
+    # BATCH_SIZE = 20 # Adjust based on your AI endpoint's capacity and Gemini's rate limits
+    # BATCH_SIZE = 12 # Adjust based on your AI endpoint's capacity and Gemini's rate limits
+    BATCH_SIZE = 14 # Adjust based on your AI endpoint's capacity and Gemini's rate limits
+
+    all_batch_results = produce_batch_coordinates(batch_payload, BATCH_SIZE, selected_batch_payload_size)
+
+    # CHQ: Gemini AI added check
+    # Check if the output is a list and fail if not
+    if not isinstance(all_batch_results, list):
+        # Print a specific error message that the workflow can grep for
+        print("::error::The output of 'produce_batch_coordinates' is not a list.")
+        raise TypeError("The output of 'produce_batch_coordinates' must be a list.")
+
+    # Map the results back to the DataFrame using the original index
+    for result in all_batch_results:
+        original_idx = result.get('gbifID_original_index')
+        county = result.get('county')
+        city = result.get('city/town')
+        error = result.get('error') # Check for individual errors from the AI endpoint
+
+        if original_idx is not None and original_idx in df_transformed.index:
+            if not error:
+                df_transformed.at[original_idx, 'county'] = county
+                df_transformed.at[original_idx, 'cityOrTown'] = city
+            else:
+                logger.warning(f"Error for record at original index {original_idx} (Lat: {result.get('latitude')}, Lon: {result.get('longitude')}): {error}")
+                # Optionally, store the error message in the column or leave as None
+                # df_transformed.at[original_idx, 'county'] = f"Error: {error}"
+                # df_transformed.at[original_idx, 'cityOrTown'] = f"Error: {error}"
+        else:
+            logger.warning(f"Could not find original index {original_idx} in DataFrame for result: {result}")
+    return df_transformed
+
+
+
+def run_individual_analysis(thedf):
+    # of_minutes = 60
+
+    # all_batch_results = []
+ 
+    df_transformed = thedf
+
+    for index, row in df_transformed:
+        
+        the_lat = row['decimalLatitude']
+        the_lon = row['decimalLongitude']
+
+        # Iterate through batch_payload in chunks
+        # for i in range(0, the_selected_batch_payload_size, 1):
+
+        try:
+            # raw_location_data = fetch_county_city_town_analysis_single(34.0522, -118.2437)
+            raw_location_data = fetch_county_city_town_analysis_single(the_lat, the_lon)
+
+            county_location = raw_location_data[0].properties.county
+            city_location = raw_location_data[0].properties.city
+
+            # original_idx = result.get('gbifID_original_index')
+            # original_idx = df_transformed.get("gbifID")
+            df_transformed.at[index, 'county'] = county_location
+            df_transformed.at[index, 'cityOrTown'] = city_location
+
+            # chunk_results = fetch_ai_county_city_town_analysis_batch(current_chunk)
+            # all_batch_results.extend({county_location, city_location})
+            # logger.info(f"Processed batch {i // batch_size + 1}. Total results collected: {len(all_batch_results)}")
+            # Introduce a small delay between *chunks* of batch calls to prevent overloading
+            # your AI server or hitting its concurrent request limits.
+            # This is separate from any internal delays the AI server might have.
+            # if i + batch_size < the_selected_batch_payload_size:
+            #     # time.sleep(0.5) # Wait 0.5 seconds between batches
+            #     time.sleep(1.2*of_minutes) # Wait 1.2 minutes between batches
+
+
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"HTTP error during batch AI endpoint call : {e.response.status_code} - {e.response.text}")
+            # Log the error, but try to continue with other chunks if possible
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Network error during batch AI endpoint call : {e}")
+        except Exception as e:
+            logger.error(f"An unexpected error occurred during batch AI endpoint call  : {e}", exc_info=True)
+
+    return df_transformed
+
+
+def attach_city_county_info(the_df):
+    df_transformed = the_df
+
+    df_final = df_transformed
+
+    is_running_batch_analysis = False
+
+    # Prepare data for batch processing: select only rows with valid coordinates
+    coords_to_enrich = df_transformed[
+        df_transformed['decimalLatitude'].notna() &
+        df_transformed['decimalLongitude'].notna()
+    ].copy() # Use .copy() to ensure you're working on a copy and avoid warnings
+
+    if not coords_to_enrich.empty:
+        # Create a list of dictionaries, each containing the necessary info for the AI endpoint
+        # Important: Pass a unique identifier (like gbifID) if you have duplicate lat/lon pairs
+        # so you can accurately map results back.
+        if is_running_batch_analysis:
+            df_final = run_batch_analysis(df_transformed, coords_to_enrich)
+        else:
+            df_final = run_individual_analysis(df_transformed) 
+
+    return df_final
+
 # --- Transformation Function ---
 def transform_gbif_data(raw_data):
+    """
+    Transforms raw GBIF occurrence data into a cleaned and enriched Pandas DataFrame.
+    """
+    if not raw_data:
+        logger.warning("No raw data to transform.")
+        return pd.DataFrame()
+
+    logger.info(f"Starting transformation of {len(raw_data)} records.")
+
+    df = pd.DataFrame(raw_data)
+
+    df_transformed = clean_data(df)
+
+    final_df = attach_city_county_info(df_transformed)
+
+    logger.info(f"Finished enriching location data with AI endpoint.")
+
+    logger.info(f"Finished transformation. Transformed records: {len(final_df)}.")
+    return final_df
+
+
+# --- Transformation Function ---
+def transform_gbif_data_alt(raw_data):
     """
     Transforms raw GBIF occurrence data into a cleaned and enriched Pandas DataFrame.
     """
