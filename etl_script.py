@@ -292,7 +292,8 @@ def transform_gbif_data(raw_data):
         # BATCH_SIZE = 100 # Adjust based on your AI endpoint's capacity and Gemini's rate limits
         # BATCH_SIZE = 4 # Adjust based on your AI endpoint's capacity and Gemini's rate limits
         # BATCH_SIZE = 20 # Adjust based on your AI endpoint's capacity and Gemini's rate limits
-        BATCH_SIZE = 12 # Adjust based on your AI endpoint's capacity and Gemini's rate limits
+        # BATCH_SIZE = 12 # Adjust based on your AI endpoint's capacity and Gemini's rate limits
+        BATCH_SIZE = 14 # Adjust based on your AI endpoint's capacity and Gemini's rate limits
 
         all_batch_results = []
 
