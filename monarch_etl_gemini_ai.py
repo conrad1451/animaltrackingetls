@@ -362,6 +362,7 @@ def attach_city_county_info(the_df):
                     # df_transformed.at[original_idx, 'cityOrTown'] = f"Error: {error}"
             else:
                 logger.warning(f"Could not find original index {original_idx} in DataFrame for result: {result}")
+    return df_transformed
 
 # --- Transformation Function ---
 def transform_gbif_data(raw_data):
