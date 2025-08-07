@@ -85,6 +85,22 @@ def fetch_ai_county_city_town_analysis_batch(batch_of_coordinates):
     response.raise_for_status() # Raise HTTPError for bad responses (e.g., 400, 500)
     return response.json()
 
+
+def final_set_of_records_to_scan(the_raw_records, records_limitation):
+
+    if records_limitation is not None:
+        # in this case, it must be an integer, so return a
+        # slice of the_raw_records of size records_limitation
+        # FIXME: find a way to catch any errors arising from the data type
+        # of records_limitation being anything other than integer
+        record_size = int(records_limitation)
+
+        return the_raw_records[0:record_size]
+    else:
+        # return the entirety of the_raw_records 
+        return the_raw_records
+
+
 # --- Extraction Function ---
 def extract_gbif_data(
     taxon_key=DEFAULT_TAXON_KEY,
@@ -98,6 +114,7 @@ def extract_gbif_data(
     target_day=10,
     num_pages_to_extract=None,
     limiting_page_count=None,
+    records_limitation=None,
     # start_date=None,
     # end_date=None
 ):
@@ -148,7 +165,10 @@ def extract_gbif_data(
         current_params['offset'] = offset
         try:
             data = fetch_gbif_page_etl(GBIF_BASE_URL, current_params)
-            records = data.get('results', [])
+
+            raw_records = data.get('results', [])
+            records = final_set_of_records_to_scan(raw_records, records_limitation)
+
             all_records.extend(records)
 
             count = data.get('count', 0)
@@ -474,7 +494,7 @@ def run_monarch_etl(year, month):
 
     logger.info("\n\n\n--- EXTRACT STEP ---\n\n\n")
 
-    raw_data = extract_gbif_data(target_year=year, target_month=month, whole_month=True, limiting_page_count=True, num_pages_to_extract=10)
+    raw_data = extract_gbif_data(target_year=year, target_month=month, whole_month=True, limiting_page_count=True, num_pages_to_extract=10, records_limitation=42)
 
 
     # CHQ: sample hard-coded date
@@ -517,7 +537,8 @@ def run_monarch_etl_alt(year, month, day):
         whole_month=False,
         target_day=day,
         limiting_page_count=True,
-        num_pages_to_extract=10
+        num_pages_to_extract=10, 
+        records_limitation=42
     )
 
     if raw_data:
@@ -554,4 +575,5 @@ if __name__ == '__main__':
 
     # run_monarch_etl(2025, 5) # For May 2025
     # run_monarch_etl(2024, 9) # For Sep 2024
-    run_monarch_etl_alt(2025, 6, 30) # For Jun 30 2025
+    # run_monarch_etl_alt(2025, 6, 30) # For Jun 30 2025 # had 164 entries
+    run_monarch_etl_alt(2025, 6, 26) # For Jun 26 2025 
