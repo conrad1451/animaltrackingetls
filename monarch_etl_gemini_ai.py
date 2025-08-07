@@ -305,7 +305,7 @@ def produce_batch_coordinates(the_batch_payload, the_batch_size, the_selected_ba
         except Exception as e:
             logger.error(f"An unexpected error occurred during batch AI endpoint call for chunk starting at index {i}: {e}", exc_info=True)
 
-    return batch_size
+    return all_batch_results
 
  
 
