@@ -471,6 +471,8 @@ def run_monarch_etl(year, month):
     # else:
     #     end_date = datetime(year, month + 1, 1) - timedelta(days=1)
 
+    logger.info("\n\n\n--- EXTRACT STEP ---\n\n\n")
+
     raw_data = extract_gbif_data(target_year=year, target_month=month, whole_month=True, limiting_page_count=True, num_pages_to_extract=10)
 
 
@@ -478,8 +480,10 @@ def run_monarch_etl(year, month):
     # raw_data = extract_gbif_data(target_year=2025, target_month=6)
 
     if raw_data:
+        logger.info("\n\n\n--- TRANSFORM STEP ---\n\n\n")
         transformed_df = transform_gbif_data(raw_data)
         if not transformed_df.empty:
+            logger.info("\n\n\n--- LOAD STEP ---\n\n\n")
             load_data(transformed_df, my_calendar[target_month] + " " + str(target_year))
             # load_data(transformed_df, calendar.month_name[target_month] + " " + str(target_year))
         else:
@@ -504,6 +508,8 @@ def run_monarch_etl_alt(year, month, day):
     logger.info(f"\n\nRunning ETL for {year}-{month}-{day} \n")
     logger.info("--- ETL process started ---")
 
+    logger.info("\n\n\n--- EXTRACT STEP ---\n\n\n")
+
     raw_data = extract_gbif_data(
         target_year=year,
         target_month=month,
@@ -514,8 +520,10 @@ def run_monarch_etl_alt(year, month, day):
     )
 
     if raw_data:
+        logger.info("\n\n\n--- TRANSFORM STEP ---\n\n\n")
         transformed_df = transform_gbif_data(raw_data)
         if not transformed_df.empty:
+            logger.info("\n\n\n--- LOAD STEP ---\n\n\n")
             # Corrected line: pass the variables directly to the table name string
             table_name = f"{my_calendar[month]} {day} {year}" 
             load_data(transformed_df, table_name)
