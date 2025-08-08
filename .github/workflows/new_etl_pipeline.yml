@@ -105,6 +105,16 @@ jobs:
         #     echo "ETL run completed with data loaded (or no 'no data' warning found)."
         #   fi
 
+        # CHQ: step added by Gemini AI
+      - name: Validate Load Step Dependencies
+        run: |
+          if grep -q "AttributeError: module 'pandas.api.types' has no attribute 'StringDtype'" etl_output.log; then
+            echo "::error::ETL load step failed due to a dependency error."
+            exit 1 # Exit with a non-zero status to mark the job as failed
+          else
+            echo "Load step dependency check passed. No 'StringDtype' error found."
+          fi
+
       - name: Check for new data
         # (Optional: for debugging)
         # You could add steps here to verify data in Neon, e.g., using psql
