@@ -401,10 +401,6 @@ def run_batch_analysis(the_df, coords_to_enrich):
 
 
 def run_individual_analysis(thedf):
-    # of_minutes = 60
-
-    # all_batch_results = []
- 
     df_transformed = thedf
 
     # CHQ: Gemini AI debugged to allow iteration over dataframe
@@ -412,12 +408,7 @@ def run_individual_analysis(thedf):
         the_lat = row['decimalLatitude']
         the_lon = row['decimalLongitude']
 
-        # Iterate through batch_payload in chunks
-        # for i in range(0, the_selected_batch_payload_size, 1):
-
         try:
-            # raw_location_data = fetch_county_city_town_analysis_single(34.0522, -118.2437)
-            # raw_location_data = fetch_county_city_town_analysis_single(the_lat, the_lon)
             loc_data_dict = fetch_county_city_town_analysis_single(the_lat, the_lon)
 
             # CHQ - logic within try clause written by Gemini AI
@@ -444,31 +435,7 @@ def run_individual_analysis(thedf):
                 logger.warning("API response did not contain any features for the given coordinates.")
                 county_location = None
                 city_location = None
-
-
-
-            # county_location = raw_location_data['results'][0]['properties']['county']
-            # county_location = raw_location_data[0].properties.county
-            # city_location = raw_location_data[0].properties.city
-
-            # county_location = raw_location_data.county
-            # city_location = raw_location_data.city
-
-            # original_idx = result.get('gbifID_original_index')
-            # original_idx = df_transformed.get("gbifID")
-            # df_transformed.at[index, 'county'] = county_location
-            # df_transformed.at[index, 'cityOrTown'] = city_location
-
-            # chunk_results = fetch_ai_county_city_town_analysis_batch(current_chunk)
-            # all_batch_results.extend({county_location, city_location})
-            # logger.info(f"Processed batch {i // batch_size + 1}. Total results collected: {len(all_batch_results)}")
-            # Introduce a small delay between *chunks* of batch calls to prevent overloading
-            # your AI server or hitting its concurrent request limits.
-            # This is separate from any internal delays the AI server might have.
-            # if i + batch_size < the_selected_batch_payload_size:
-            #     # time.sleep(0.5) # Wait 0.5 seconds between batches
-            #     time.sleep(1.2*of_minutes) # Wait 1.2 minutes between batches
-
+ 
 
         except requests.exceptions.HTTPError as e:
             logger.error(f"HTTP error during batch AI endpoint call : {e.response.status_code} - {e.response.text}")
@@ -656,10 +623,6 @@ def run_monarch_etl(year, month):
     logger.info("\n\n\n--- EXTRACT STEP ---\n\n\n")
 
     raw_data = extract_gbif_data(target_year=year, target_month=month, whole_month=True, limiting_page_count=True, num_pages_to_extract=10, records_limitation=42)
-
-
-    # CHQ: sample hard-coded date
-    # raw_data = extract_gbif_data(target_year=2025, target_month=6)
 
     if raw_data:
         logger.info("\n\n\n--- TRANSFORM STEP ---\n\n\n")
