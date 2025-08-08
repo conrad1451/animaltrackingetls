@@ -700,5 +700,5 @@ if __name__ == '__main__':
 
     # run_monarch_etl(2025, 5) # For May 2025
     # run_monarch_etl(2024, 9) # For Sep 2024
-    # run_monarch_etl_alt(2025, 6, 30) # For Jun 30 2025 # had 164 entries
-    run_monarch_etl_alt(2025, 6, 26) # For Jun 26 2025 
+    run_monarch_etl_alt(2025, 6, 30) # For Jun 30 2025 # had 164 entries
+    # run_monarch_etl_alt(2025, 6, 26) # For Jun 26 2025 
