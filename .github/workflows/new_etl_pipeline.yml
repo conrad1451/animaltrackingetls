@@ -70,6 +70,15 @@ jobs:
             echo "Type validation passed. The 'produce_batch_coordinates' function returned a list."
           fi
 
+      - name: Validate Fetch City And County
+        run: |
+          if grep -q "::error::ERROR - An unexpected error occurred during batch AI endpoint call" etl_output.log; then
+            echo "Data was not fetched."
+            exit 1
+          else
+            echo "Data fetched."
+          fi
+
         # CHQ: step added by Gemini AI
       - name: Check ETL Results for Data Loading Success
         run: |
