@@ -82,7 +82,7 @@ def fetch_ai_county_city_town_analysis_batch(batch_of_coordinates):
     headers = {'Content-Type': 'application/json'}
     data = json.dumps(batch_of_coordinates) # Send the list of dicts as JSON payload
 
-    logger.info(f"Attempting to fetch batch data from AI endpoint for {len(batch_of_coordinates)} coordinates.")
+    logger.info(f"Attempting to fetch batch data from API endpoint.")
     # response = requests.get(endpoint, headers=headers, data=data, timeout=60) # Add a timeout for safety
     response = requests.get(endpoint, timeout=60) # Add a timeout for safety
     response.raise_for_status() # Raise HTTPError for bad responses (e.g., 400, 500)
