@@ -88,7 +88,18 @@ jobs:
           else
             echo "API response structure validation passed. The 'features' key was found as expected."
           fi
-        # CHQ: step added by Gemini AI
+
+      # CHQ: step added by Gemini AI (corrected position)
+      - name: Validate Load Step Dependencies
+        run: |
+          if grep -q "AttributeError: module 'pandas.api.types' has no attribute 'StringDtype'" etl_output.log; then
+            echo "::error::ETL load step failed due to a dependency error."
+            exit 1 # Exit with a non-zero status to mark the job as failed
+          else
+            echo "Load step dependency check passed. No 'StringDtype' error found."
+          fi
+
+      # CHQ: step added by Gemini AI
       - name: Check ETL Results for Data Loading Success
         run: |
           if grep -q "No data to load as DataFrame is empty" etl_output.log; then
@@ -105,23 +116,6 @@ jobs:
             exit 1 # Exit with a non-zero status to mark the job as failed
           else
             echo "ETL run completed with records loaded (or no 'no data' warning found)."
-          fi
-        # run: |
-        #   if grep -q "Error for record at original index" etl_output.log; then
-        #     echo "::error::ETL run considered a failure: No data was loaded into the database."
-        #     exit 1 # Exit with a non-zero status to mark the job as failed
-        #   else
-        #     echo "ETL run completed with data loaded (or no 'no data' warning found)."
-        #   fi
-
-        # CHQ: step added by Gemini AI
-      - name: Validate Load Step Dependencies
-        run: |
-          if grep -q "AttributeError: module 'pandas.api.types' has no attribute 'StringDtype'" etl_output.log; then
-            echo "::error::ETL load step failed due to a dependency error."
-            exit 1 # Exit with a non-zero status to mark the job as failed
-          else
-            echo "Load step dependency check passed. No 'StringDtype' error found."
           fi
 
       - name: Check for new data
