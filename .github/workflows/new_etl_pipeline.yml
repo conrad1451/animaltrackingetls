@@ -74,7 +74,7 @@ jobs:
         run: |
           if grep -q "::error::ERROR - An unexpected error occurred during batch AI endpoint call" etl_output.log; then
             echo "Data was not fetched."
-            exit 1
+            exit 1 # Exit with a non-zero status to mark the job as failed
           else
             echo "Data fetched."
           fi
