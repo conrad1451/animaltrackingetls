@@ -399,8 +399,8 @@ def run_individual_analysis(thedf):
  
     df_transformed = thedf
 
-    for index, row in df_transformed:
-        
+    # CHQ: Gemini AI debugged to allow iteration over dataframe
+    for index, row in df_transformed.iterrows():        
         the_lat = row['decimalLatitude']
         the_lon = row['decimalLongitude']
 
