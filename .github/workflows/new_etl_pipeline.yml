@@ -54,11 +54,24 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt # Install all libraries listed in requirements.txt
+          pip install -r requirements.txt
+
+      - name: Clean up old log file
+        run: rm -f etl_output.log # Deletes the log file if it exists
 
       - name: Run ETL Script
-        id: run_script # Add an ID to this step to reference its output
-        run: python etl_script.py 2>&1 | tee etl_output.log # Capture output to a log file
+        id: run_script
+        run: python etl_script.py 2>&1 | tee etl_output.log
+
+      # The validation step is correctly placed here, after the script has run
+      - name: Validate Load Step Dependencies
+        run: |
+          if grep -q "AttributeError: module 'pandas.api.types' has no attribute 'StringDtype'" etl_output.log; then
+            echo "::error::ETL load step failed due to a dependency error."
+            exit 1
+          else
+            echo "Load step dependency check passed. No 'StringDtype' error found."
+          fi
 
         # CHQ: step added by Gemini AI
       - name: Validate Batch Coordinates Type
@@ -90,14 +103,14 @@ jobs:
           fi
 
       # CHQ: step added by Gemini AI (corrected position)
-      - name: Validate Load Step Dependencies
-        run: |
-          if grep -q "AttributeError: module 'pandas.api.types' has no attribute 'StringDtype'" etl_output.log; then
-            echo "::error::ETL load step failed due to a dependency error."
-            exit 1 # Exit with a non-zero status to mark the job as failed
-          else
-            echo "Load step dependency check passed. No 'StringDtype' error found."
-          fi
+      # - name: Validate Load Step Dependencies
+      #   run: |
+      #     if grep -q "AttributeError: module 'pandas.api.types' has no attribute 'StringDtype'" etl_output.log; then
+      #       echo "::error::ETL load step failed due to a dependency error."
+      #       exit 1 # Exit with a non-zero status to mark the job as failed
+      #     else
+      #       echo "Load step dependency check passed. No 'StringDtype' error found."
+      #     fi
 
       # CHQ: step added by Gemini AI
       - name: Check ETL Results for Data Loading Success
