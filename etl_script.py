@@ -596,18 +596,18 @@ def run_monarch_etl(year, month):
 
 
     my_calendar ={
-        1: "January",
-        2: "February",
-        3: "March",
-        4: "April",
-        5: "May",
-        6: "June",
-        7: "July",
-        8: "August",
-        9: "September",
-        10: "October",
-        11: "Novemeber",
-        12: "December",
+        1: "january",
+        2: "february",
+        3: "march",
+        4: "april",
+        5: "may",
+        6: "june",
+        7: "july",
+        8: "august",
+        9: "september",
+        10: "october",
+        11: "novemeber",
+        12: "december",
     }
 
 
@@ -647,8 +647,8 @@ def run_monarch_etl_alt(year, month, day):
     """
 
     my_calendar = {
-        1: "January", 2: "February", 3: "March", 4: "April", 5: "May", 6: "June",
-        7: "July", 8: "August", 9: "September", 10: "October", 11: "Novemeber", 12: "December",
+        1: "january", 2: "february", 3: "march", 4: "april", 5: "may", 6: "june",
+        7: "july", 8: "august", 9: "september", 10: "october", 11: "novemeber", 12: "december",
     }
 
     logger.info(f"\n\nRunning ETL for {year}-{month}-{day} \n")
@@ -663,7 +663,7 @@ def run_monarch_etl_alt(year, month, day):
         target_day=day,
         limiting_page_count=True,
         num_pages_to_extract=10, 
-        records_limitation=42
+        records_limitation=None
     )
 
     if raw_data:
@@ -672,7 +672,7 @@ def run_monarch_etl_alt(year, month, day):
         if not transformed_df.empty:
             logger.info("\n\n\n--- LOAD STEP ---\n\n\n")
             # Corrected line: pass the variables directly to the table name string
-            table_name = f"{my_calendar[month]}_{day}_{year}" 
+            table_name = f"{my_calendar[month]}{day}{year}" 
             load_data(transformed_df, table_name)
         else:
             logger.info("Transformed DataFrame is empty. No data to load.")
