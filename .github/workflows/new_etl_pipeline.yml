@@ -12,7 +12,7 @@ on:
     paths:
       - "etl_script.py"
       - "requirements.txt"
-      - ".github/workflows/etl_pipeline.yml" # Rerun if workflow itself changes
+      - ".github/workflows/new_etl_pipeline.yml" # Rerun if workflow itself changes
 
   # Trigger the workflow on a schedule (e.g., daily at 02:00 UTC)
   schedule:
