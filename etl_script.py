@@ -114,7 +114,14 @@ def fetch_county_city_town_analysis_single(latitude, longitude):
     # response = requests.get(endpoint, headers=headers, data=data, timeout=60) # Add a timeout for safety
     response = requests.get(endpoint, timeout=60) # Add a timeout for safety
     response.raise_for_status() # Raise HTTPError for bad responses (e.g., 400, 500)
-    return response.json()
+
+    thedata = response.json()
+    # county_location = raw_location_data['results'][0]['properties']['county']
+    # thefinal = thedata.features[0]['properties']['county']
+    thefinal = thedata.features[0]['properties'] 
+
+    # return response.json()
+    return thefinal
 
 
 def final_set_of_records_to_scan(the_raw_records, records_limitation):
@@ -411,8 +418,13 @@ def run_individual_analysis(thedf):
             # raw_location_data = fetch_county_city_town_analysis_single(34.0522, -118.2437)
             raw_location_data = fetch_county_city_town_analysis_single(the_lat, the_lon)
 
-            county_location = raw_location_data[0].properties.county
-            city_location = raw_location_data[0].properties.city
+
+            # county_location = raw_location_data['results'][0]['properties']['county']
+            # county_location = raw_location_data[0].properties.county
+            # city_location = raw_location_data[0].properties.city
+
+            county_location = raw_location_data.county
+            city_location = raw_location_data.city
 
             # original_idx = result.get('gbifID_original_index')
             # original_idx = df_transformed.get("gbifID")
