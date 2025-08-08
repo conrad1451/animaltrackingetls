@@ -39,7 +39,7 @@ jobs:
       NEON_DB_USER: ${{ secrets.NEON_DB_USER }}
       NEON_DB_PASSWORD: ${{ secrets.NEON_DB_PASSWORD }}
       NEON_DB_PORT: ${{ secrets.NEON_DB_PORT }}
-      AI_ENDPOINT_BASE_URL: ${{ secrets.AI_ENDPOINT_BASE_URL  }}
+      REVERSE_GEOCACHE_API_BASE: ${{ secrets.REVERSE_GEOCACHE_API_BASE  }}
 
     steps:
       - name: Checkout code
