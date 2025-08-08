@@ -89,7 +89,6 @@ def fetch_ai_county_city_town_analysis_batch(batch_of_coordinates):
     return response.json()
 
 
-# returns the dictionary response from the reverse geocaching API
 @retry(
     wait=wait_exponential(multiplier=1, min=2, max=10),
     stop=stop_after_attempt(5),
@@ -116,13 +115,13 @@ def fetch_county_city_town_analysis_single(latitude, longitude):
     response = requests.get(endpoint, timeout=60) # Add a timeout for safety
     response.raise_for_status() # Raise HTTPError for bad responses (e.g., 400, 500)
 
-    # thedata = response.json()
+    thedata = response.json()
     # county_location = raw_location_data['results'][0]['properties']['county']
     # thefinal = thedata.features[0]['properties']['county']
-    # thefinal = thedata.features[0]['properties'] 
+    thefinal = thedata.features[0]['properties'] 
 
-    # return thefinal
-    return response.json()
+    # return response.json()
+    return thefinal
 
 
 def final_set_of_records_to_scan(the_raw_records, records_limitation):
@@ -417,47 +416,20 @@ def run_individual_analysis(thedf):
 
         try:
             # raw_location_data = fetch_county_city_town_analysis_single(34.0522, -118.2437)
-            # raw_location_data = fetch_county_city_town_analysis_single(the_lat, the_lon)
-            loc_data_dict = fetch_county_city_town_analysis_single(the_lat, the_lon)
-
-            # CHQ - logic within try clause written by Gemini AI
-            # First, get the 'features' list
-            features = loc_data_dict.get('features', [])
-
-            # Check if the list is not empty
-            if features:
-                # Get the first feature
-                first_feature = features[0]
-                
-                # Get the 'properties' dictionary
-                properties = first_feature.get('properties', {})
-                
-                # Extract the county and city from the properties
-                county_location = properties.get('county')
-                city_location = properties.get('city')
-
-                # Update the DataFrame
-                df_transformed.at[index, 'county'] = county_location
-                df_transformed.at[index, 'cityOrTown'] = city_location
-            else:
-                # Handle the case where no features were returned
-                logger.warning("API response did not contain any features for the given coordinates.")
-                county_location = None
-                city_location = None
-
+            raw_location_data = fetch_county_city_town_analysis_single(the_lat, the_lon)
 
 
             # county_location = raw_location_data['results'][0]['properties']['county']
             # county_location = raw_location_data[0].properties.county
             # city_location = raw_location_data[0].properties.city
 
-            # county_location = raw_location_data.county
-            # city_location = raw_location_data.city
+            county_location = raw_location_data.county
+            city_location = raw_location_data.city
 
             # original_idx = result.get('gbifID_original_index')
             # original_idx = df_transformed.get("gbifID")
-            # df_transformed.at[index, 'county'] = county_location
-            # df_transformed.at[index, 'cityOrTown'] = city_location
+            df_transformed.at[index, 'county'] = county_location
+            df_transformed.at[index, 'cityOrTown'] = city_location
 
             # chunk_results = fetch_ai_county_city_town_analysis_batch(current_chunk)
             # all_batch_results.extend({county_location, city_location})

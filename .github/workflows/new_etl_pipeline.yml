@@ -80,6 +80,15 @@ jobs:
           fi
 
         # CHQ: step added by Gemini AI
+      - name: Validate API Response Structure
+        run: |
+          if grep -q "ERROR - An unexpected error occurred during batch AI endpoint call  : 'dict' object has no attribute 'features'" etl_output.log; then
+            echo "::error::ETL run failed: The API response was a dictionary, but it did not have the expected 'features' key."
+            exit 1
+          else
+            echo "API response structure validation passed. The 'features' key was found as expected."
+          fi
+        # CHQ: step added by Gemini AI
       - name: Check ETL Results for Data Loading Success
         run: |
           if grep -q "No data to load as DataFrame is empty" etl_output.log; then
