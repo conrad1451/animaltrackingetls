@@ -622,7 +622,8 @@ def run_monarch_etl(year, month):
 
     logger.info("\n\n\n--- EXTRACT STEP ---\n\n\n")
 
-    raw_data = extract_gbif_data(target_year=year, target_month=month, whole_month=True, limiting_page_count=True, num_pages_to_extract=10, records_limitation=42)
+    # raw_data = extract_gbif_data(target_year=year, target_month=month, whole_month=True, limiting_page_count=True, num_pages_to_extract=10, records_limitation=42)
+    raw_data = extract_gbif_data(target_year=year, target_month=month, whole_month=True, limiting_page_count=True, num_pages_to_extract=10)
 
     if raw_data:
         logger.info("\n\n\n--- TRANSFORM STEP ---\n\n\n")
@@ -671,7 +672,7 @@ def run_monarch_etl_alt(year, month, day):
         if not transformed_df.empty:
             logger.info("\n\n\n--- LOAD STEP ---\n\n\n")
             # Corrected line: pass the variables directly to the table name string
-            table_name = f"{my_calendar[month]} {day} {year}" 
+            table_name = f"{my_calendar[month]}_{day}_{year}" 
             load_data(transformed_df, table_name)
         else:
             logger.info("Transformed DataFrame is empty. No data to load.")
