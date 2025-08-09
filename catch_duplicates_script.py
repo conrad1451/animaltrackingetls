@@ -25,9 +25,15 @@ NEON_DB_USER = os.getenv('NEON_DB_USER')
 NEON_DB_PASSWORD = os.getenv('NEON_DB_PASSWORD')
 NEON_DB_PORT = os.getenv('NEON_DB_PORT', '5432')
 
+
+POSTGRES_CONNECTION_STRING=os.getenv('POSTGRES_CONNECTION_STRING')
+
+# conn_string = (
+#     f"postgresql+psycopg2://{NEON_DB_USER}:{NEON_DB_PASSWORD}@"
+#     f"{NEON_DB_HOST}:{NEON_DB_PORT}/{NEON_DB_NAME}"
+# )
 conn_string = (
-    f"postgresql+psycopg2://{NEON_DB_USER}:{NEON_DB_PASSWORD}@"
-    f"{NEON_DB_HOST}:{NEON_DB_PORT}/{NEON_DB_NAME}"
+    f"{POSTGRES_CONNECTION_STRING}"
 )
 # engine = create_engine(conn_string)
 
