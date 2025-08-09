@@ -73,10 +73,9 @@ jobs:
           POSTGRES_CONNECTION_STRING: ${{ secrets.POSTGRES_CONNECTION_STRING }}
         #   POSTGRES_CONNECTION_STRING_SINGLE: ${{ secrets.POSTGRES_CONNECTION_STRING_SINGLE }}
 
-        run: |
-          # The tee command allows you to see the output in the job logs
-          # and also save it to a file.
-          python catch_duplicates_script.py 2>&1 | tee etl_output.log
+        # The tee command allows you to see the output in the job logs
+        # and also save it to a file.
+        run: python catch_duplicates_script.py 2>&1 | tee etl_output.log
 
       # Optional: You can add more steps here, like uploading the log file as an artifact
       - name: Upload output log
