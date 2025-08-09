@@ -681,6 +681,10 @@ def run_monarch_etl_alt(year, month, day):
 
     logger.info("--- ETL process finished ---")
 
+def run_monarch_etl_multi_day_scan(year, month, day_start, day_end):
+    for chosen_day in range(day_start, day_end+1):
+        run_monarch_etl_alt(year, month, chosen_day) # For Jun 30 2025 # had 164 entries
+
 if __name__ == '__main__':
     # --- Example Usage for a specific month (e.g., June 2025) ---
     # For a real cron job, you might calculate year/month dynamically
@@ -700,5 +704,7 @@ if __name__ == '__main__':
 
     # run_monarch_etl(2025, 5) # For May 2025
     # run_monarch_etl(2024, 9) # For Sep 2024
-    run_monarch_etl_alt(2025, 6, 22) # For Jun 30 2025 # had 164 entries
+    # run_monarch_etl_alt(2025, 6, 22) # For Jun 30 2025 # had 164 entries
     # run_monarch_etl_alt(2025, 6, 26) # For Jun 26 2025 
+
+    run_monarch_etl_multi_day_scan(2025, 6, 23, 25)
