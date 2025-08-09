@@ -707,4 +707,5 @@ if __name__ == '__main__':
     # run_monarch_etl_alt(2025, 6, 22) # For Jun 30 2025 # had 164 entries
     # run_monarch_etl_alt(2025, 6, 26) # For Jun 26 2025 
 
-    run_monarch_etl_multi_day_scan(2025, 6, 23, 25)
+    # run_monarch_etl_multi_day_scan(2025, 6, 23, 25)
+    run_monarch_etl_multi_day_scan(2025, 6, 27, 30)
