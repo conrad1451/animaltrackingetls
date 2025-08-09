@@ -78,7 +78,7 @@ jobs:
 
       # Optional: You can add more steps here, like uploading the log file as an artifact
       - name: Upload output log
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: etl-logs
           path: etl_output.log
