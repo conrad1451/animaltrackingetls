@@ -1,0 +1,62 @@
+# .github/workflows/catch_duplicate_pipeline.yml
+
+name: Catch Duplicates in Neon Database
+
+on:
+  # Trigger the workflow on pushes to the 'main' branch (for testing/initial setup)
+  push:
+    branches:
+      - main
+    paths:
+      - "catch_duplicates_script.py"
+      - ".github/workflows/catch_duplicate_pipeline.yml" # Rerun if workflow itself changes
+
+  # Trigger the workflow on a schedule (e.g., daily at 02:00 UTC)
+  schedule:
+    # Uses cron syntax. Learn more: https://crontab.guru/
+    # new time of 2:52pm NYC time (1840 UTC) - 1440 + 4h offset
+    # - cron: "52 18 * * *"
+    # test time of 130am NYC time (530 UTC) - 0130 + 4h offest
+    - cron: "30 5 * * *"
+
+  # test time of 640am NYC time (1040 UTC) - 0640 + 4h offest
+  # - cron: "40 10 * * *"
+
+  # test time of 310am NYC time (0710 UTC) - 0310 + 4h offest
+  # - cron: "10 7 * * 4"
+  # - cron: "0 0 * * 0"  # Runs every Sunday at midnight UTC # Google Search (can you make a yaml file run a job monthly?)
+jobs:
+  run_etl:
+    runs-on: ubuntu-latest # Use a fresh Ubuntu runner for each job
+
+    # Set environment variables from GitHub Secrets
+    env:
+      NEON_DB_HOST: ${{ secrets.NEON_DB_HOST }}
+      NEON_DB_NAME: ${{ secrets.NEON_DB_NAME }}
+      NEON_DB_USER: ${{ secrets.NEON_DB_USER }}
+      NEON_DB_PASSWORD: ${{ secrets.NEON_DB_PASSWORD }}
+      NEON_DB_PORT: ${{ secrets.NEON_DB_PORT }}
+      REVERSE_GEOCACHE_API_BASE: ${{ secrets.REVERSE_GEOCACHE_API_BASE  }}
+      REVERSE_GEOCACHE_API_KEY: ${{ secrets.REVERSE_GEOCACHE_API_KEY  }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4 # Action to check out your repository code
+
+      - name: Set up Python
+        uses: actions/setup-python@v5 # Action to set up Python environment
+        with:
+          python-version: "3.9" # Specify your Python version (e.g., 3.8, 3.9, 3.10)
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Clean up old log file
+        run: rm -f etl_output.log # Deletes the log file if it exists
+
+      - name: Run ETL Script
+        id: run_script
+        run: python catch_duplicates_script.py 2>&1 | tee etl_output.log
+        # run: python etl_script.py 2>&1 | tee etl_output.log
