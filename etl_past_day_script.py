@@ -37,10 +37,7 @@ def get_first_sunday_of_year(input_date: date) -> date:
     return first_sunday
 
 
-
-if __name__ == '__main__':
-    
-        
+def first_sunday_test():
     # --- Example Usage ---
     # Use a date from a year to test the function
     test_date = date(2025, 8, 9)
@@ -52,6 +49,52 @@ if __name__ == '__main__':
     print(f"The first Sunday of the year {test_date_2.year} is: {first_sunday_2000}")
 
 
+def get_date_x_days_ago(x: int) -> date:
+    """
+    Returns the date from a specified number of days in the past.
+
+    Args:
+        x (int): The number of days in the past.
+
+    Returns:
+        date: A datetime.date object representing the date from x days ago.
+    """
+    if not isinstance(x, int):
+        raise TypeError("Input must be an integer.")
+    if x < 0:
+        raise ValueError("Input must be a non-negative number of days.")
+
+    # Get today's date
+    today = date.today()
+
+    # Calculate the date from x days ago
+    date_x_days_ago = today - timedelta(days=x)
+
+    return date_x_days_ago
+
+# --- Example Usage ---
+
+
+
+if __name__ == '__main__':
+    first_sunday_test()
+
+    print("\n\n\n\n\n\n\n\n\n\n------------------------------\n\n\n\n\n\n\n\n\n\n")
+
+    # --- Example Usage ---
+    # Get the date from 7 days ago
+    date_a_week_ago = get_date_x_days_ago(7)
+    print(f"The date 7 days ago was: {date_a_week_ago}")
+
+    # Get the date from 30 days ago
+    date_a_month_ago = get_date_x_days_ago(30)
+    print(f"The date 30 days ago was: {date_a_month_ago}")
+
+    # Get the date from 365 days ago
+    date_a_year_ago = get_date_x_days_ago(365)
+    print(f"The date 365 days ago was: {date_a_year_ago}")
+
+         
     current_date = datetime.now()
     target_year = current_date.year - 25
     
@@ -63,7 +106,8 @@ if __name__ == '__main__':
     # First week of 2000, from Sunday Jan 2, 2000 to Saturday Jan 8, 2000.
     # monarch_butterfly_module.monarch_etl_multi_day_scan(2000, 1, 2, 8)
 
-    # monarch_butterfly_module.monarch_etl_multi_day_scan(target_year, 1, 2, 8)
+    # weekly scan, starting from the first day of 25 years ago. 
+    monarch_butterfly_module.monarch_etl_multi_day_scan(target_year, 1, 2, 8)
 
     # CHQ: Gemini AI modified this to target the day that is X years and Y weeks ago
     # monarch_butterfly_module.monarch_etl_multi_day_scan(2025, 6, 27, 30)
