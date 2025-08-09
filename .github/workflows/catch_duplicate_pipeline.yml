@@ -70,7 +70,8 @@ jobs:
           # to your GitHub repository settings.
           # The format should be a series of key=value pairs.
           # For example: "dbname=your_db user=your_user password=your_pass host=your_host port=your_port"
-          POSTGRES_CONNECTION_STRING_SINGLE: ${{ secrets.POSTGRES_CONNECTION_STRING_SINGLE }}
+          POSTGRES_CONNECTION_STRING: ${{ secrets.POSTGRES_CONNECTION_STRING }}
+        #   POSTGRES_CONNECTION_STRING_SINGLE: ${{ secrets.POSTGRES_CONNECTION_STRING_SINGLE }}
 
         run: |
           # The tee command allows you to see the output in the job logs
