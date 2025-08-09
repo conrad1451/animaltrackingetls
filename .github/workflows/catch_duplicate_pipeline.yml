@@ -56,7 +56,29 @@ jobs:
       - name: Clean up old log file
         run: rm -f etl_output.log # Deletes the log file if it exists
 
-      - name: Run ETL Script
-        id: run_script
-        run: python catch_duplicates_script.py 2>&1 | tee etl_output.log
-        # run: python etl_script.py 2>&1 | tee etl_output.log
+      #   - name: Run ETL Script
+      #     id: run_script
+      #     run: python catch_duplicates_script.py 2>&1 | tee etl_output.log
+      #     # run: python etl_script.py 2>&1 | tee etl_output.log
+
+      # Step 4: Run the Python script with a securely-stored connection string
+      # This step is the "validation" part. If the script fails, the job fails.
+      - name: Run script and validate output
+        env:
+          # This environment variable will be used by your Python script.
+          # You must first add a secret named `POSTGRES_CONNECTION_STRING`
+          # to your GitHub repository settings.
+          # The format should be a series of key=value pairs.
+          # For example: "dbname=your_db user=your_user password=your_pass host=your_host port=your_port"
+          POSTGRES_CONNECTION_STRING: ${{ secrets.POSTGRES_CONNECTION_STRING }}
+        run: |
+          # The tee command allows you to see the output in the job logs
+          # and also save it to a file.
+          python catch_duplicates_script.py 2>&1 | tee etl_output.log
+
+      # Optional: You can add more steps here, like uploading the log file as an artifact
+      - name: Upload output log
+        uses: actions/upload-artifact@v3
+        with:
+          name: etl-logs
+          path: etl_output.log
