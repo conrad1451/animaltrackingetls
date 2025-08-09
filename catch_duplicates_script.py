@@ -50,6 +50,8 @@ cur.execute("""
 """)
 columns = [row[0] for row in cur.fetchall()]
 
+
+
 # Part 2: Construct and execute the dynamic query
 column_list = ", ".join(columns)
 dynamic_query = f"""
