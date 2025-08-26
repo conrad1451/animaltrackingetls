@@ -410,6 +410,8 @@ def load_data(conn_string, df, table_name="gbif_occurrences"):
         import psycopg2
         from sqlalchemy import create_engine
 
+        logger.info("Let's check to see if we can connect to the SQLAlchemy engine")
+
         engine = create_engine(conn_string)
 
         logger.info(f"Attempting to load {len(df)} records into '{table_name}' table...")

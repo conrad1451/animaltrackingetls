@@ -71,6 +71,16 @@ jobs:
           fi
 
         # CHQ: step added by Gemini AI
+      - name: Check for SQLAlchemy URL Error
+        run: |
+          if grep -q "Could not parse SQLAlchemy URL" etl_output.log; then
+            echo "::error::ETL run considered a failure: Malformed database connection URL."
+            exit 1
+          else
+            echo "SQLAlchemy URL validation passed."
+          fi
+
+        # CHQ: step added by Gemini AI
       - name: Check ETL Results for Data Loading Success
         run: |
           if grep -q "No data to load as DataFrame is empty" etl_output.log; then
