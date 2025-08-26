@@ -79,6 +79,7 @@ def fetch_ai_county_city_town_analysis_batch(batch_of_coordinates):
     # Use the new batch endpoint
     endpoint = f"{AI_ENDPOINT_BASE_URL}/countycityfromcoordinates_batch"
 
+
     headers = {'Content-Type': 'application/json'}
     data = json.dumps(batch_of_coordinates) # Send the list of dicts as JSON payload
 
