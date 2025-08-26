@@ -27,7 +27,9 @@ NEON_DB_HOST = os.getenv('NEON_DB_HOST')
 NEON_DB_NAME = os.getenv('NEON_DB_NAME')
 NEON_DB_USER = os.getenv('NEON_DB_USER')
 NEON_DB_PASSWORD = os.getenv('NEON_DB_PASSWORD')
-NEON_DB_PORT = os.getenv('NEON_DB_PORT', '5432')
+# NEON_DB_PORT = os.getenv('NEON_DB_PORT', '5432')
+NEON_DB_PORT = os.getenv('NEON_DB_PORT')
+GOOGLE_VM_DOCKER_HOSTED_SQL = os.getenv('GOOGLE_VM_DOCKER_HOSTED_SQL', '5432')
 
 # --- AI Endpoint Configuration (READ FROM ENVIRONMENT VARIABLE) ---
 # Ensure this environment variable is set in your GitHub Actions secrets or local environment
@@ -395,7 +397,7 @@ def transform_gbif_data(raw_data):
 
 
 # --- Load Function (Placeholder for Database Interaction) ---
-def load_data(df, table_name="gbif_occurrences"):
+def load_data(conn_string, df, table_name="gbif_occurrences"):
     """
     Loads the transformed DataFrame into the Neon PostgreSQL database.
     """
@@ -408,10 +410,6 @@ def load_data(df, table_name="gbif_occurrences"):
         import psycopg2
         from sqlalchemy import create_engine
 
-        conn_string = (
-            f"postgresql+psycopg2://{NEON_DB_USER}:{NEON_DB_PASSWORD}@"
-            f"{NEON_DB_HOST}:{NEON_DB_PORT}/{NEON_DB_NAME}"
-        )
         engine = create_engine(conn_string)
 
         logger.info(f"Attempting to load {len(df)} records into '{table_name}' table...")
@@ -489,7 +487,7 @@ def load_data(df, table_name="gbif_occurrences"):
 
 
 # --- Main ETL Orchestration Function ---
-def run_monarch_etl(year, month):
+def run_monarch_etl(year, month, conn_string):
     """
     Orchestrates the ETL process for Monarch Butterfly data for a given month and year.
     """
@@ -533,8 +531,8 @@ def run_monarch_etl(year, month):
         transformed_df = transform_gbif_data(raw_data)
         if not transformed_df.empty:
             logger.info("\n\n\n--- LOAD STEP ---\n\n\n")
-            load_data(transformed_df, my_calendar[target_month] + " " + str(target_year))
-            # load_data(transformed_df, calendar.month_name[target_month] + " " + str(target_year))
+            load_data(conn_string, transformed_df, my_calendar[target_month] + " " + str(target_year))
+            # load_data(conn_string, transformed_df, calendar.month_name[target_month] + " " + str(target_year))
         else:
             logger.info("Transformed DataFrame is empty. No data to load.")
     else:
@@ -544,7 +542,7 @@ def run_monarch_etl(year, month):
 
 # --- Main ETL Orchestration Function ---
 # --- Main ETL Orchestration Function ---
-def run_monarch_etl_alt(year, month, day):
+def run_monarch_etl_alt(year, month, day, conn_string):
     """
     Orchestrates the ETL process for Monarch Butterfly data for a given month and year.
     """
@@ -576,7 +574,7 @@ def run_monarch_etl_alt(year, month, day):
             logger.info("\n\n\n--- LOAD STEP ---\n\n\n")
             # Corrected line: pass the variables directly to the table name string
             table_name = f"{my_calendar[month]} {day} {year}" 
-            load_data(transformed_df, table_name)
+            load_data(conn_string, transformed_df, table_name)
         else:
             logger.info("Transformed DataFrame is empty. No data to load.")
     else:
@@ -595,13 +593,25 @@ if __name__ == '__main__':
         target_month = 1
         target_year += 1
 
+    
+    
+    conn_string_neon = (
+        f"postgresql+psycopg2://{NEON_DB_USER}:{NEON_DB_PASSWORD}@"
+        f"{NEON_DB_HOST}:{NEON_DB_PORT}/{NEON_DB_NAME}"
+    )
+
+    conn_string_gcp_docker = GOOGLE_VM_DOCKER_HOSTED_SQL
+
+    # conn_string = conn_string_neon
+    conn_string = conn_string_gcp_docker
+
     # This will attempt to run for the next month
-    # run_monarch_etl(target_year, target_month)
+    # run_monarch_etl(target_year, target_month, conn_string)
 
     # You could also set specific dates for testing:
-    # run_monarch_etl(2025, 6) # For June 2025
+    # run_monarch_etl(2025, 6, conn_string) # For June 2025
 
-    # run_monarch_etl(2025, 5) # For May 2025
-    # run_monarch_etl(2024, 9) # For Sep 2024
-    # run_monarch_etl_alt(2025, 6, 30) # For Jun 30 2025 # had 164 entries
-    run_monarch_etl_alt(2025, 6, 26) # For Jun 26 2025 
+    # run_monarch_etl(2025, 5, conn_string) # For May 2025
+    # run_monarch_etl(2024, 9, conn_string) # For Sep 2024
+    # run_monarch_etl_alt(2025, 6, 30, conn_string) # For Jun 30 2025 # had 164 entries
+    run_monarch_etl_alt(2025, 6, 26, conn_string) # For Jun 26 2025 
