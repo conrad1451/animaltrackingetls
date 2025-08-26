@@ -81,6 +81,16 @@ jobs:
             echo "SQLAlchemy URL validation passed."
           fi
 
+      # CHQ: step added by me
+      - name: Check for Database Connection Timeout Error
+        run: |
+          if grep -q "Error loading data into database" etl_output.log; then
+            echo "::error::ETL run considered a failure: Firewall prevented connection to database."
+            exit 1
+          else
+            echo "Database Connection Timeout validation passed."
+          fi
+
         # CHQ: step added by Gemini AI
       - name: Check ETL Results for Data Loading Success
         run: |
