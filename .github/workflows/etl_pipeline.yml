@@ -42,6 +42,7 @@ jobs:
         ${{ secrets.NEON_DB_PORT }}
         # CHQ: Map secret variable to an environmental variable for the python etl file to use
       AI_ENDPOINT_BASE_URL: ${{ secrets.AI_ENDPOINT_BASE_URL  }}
+      GOOGLE_VM_DOCKER_HOSTED_SQL: ${{ secrets.GOOGLE_VM_DOCKER_HOSTED_SQL  }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4 # Action to check out your repository code
