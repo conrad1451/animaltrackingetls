@@ -540,57 +540,6 @@ def load_data(df, conn_string, table_name="gbif_occurrences"):
 
         logger.info(f"Attempting to load {len(df)} records into '{table_name}' table...")
 
-        # CHQ: Gemini AI added types
-    
-        # Define column data types for PostgreSQL to prevent issues
-        # Adjust types as necessary based on your database schema
-        # dtype_mapping = {
-        #     'gbifID': pd.api.types.StringDtype(),
-        #     'datasetKey': pd.api.types.StringDtype(),
-        #     'datasetName': pd.api.types.StringDtype(),
-        #     'publishingOrgKey': pd.api.types.StringDtype(),
-        #     'publishingOrganizationTitle': pd.api.types.StringDtype(),
-        #     'eventDate': pd.api.types.StringDtype(), # Keep original string
-        #     'eventDateParsed': 'datetime64[ns]',
-        #     'scientificName': pd.api.types.StringDtype(),
-        #     'vernacularName': pd.api.types.StringDtype(),
-        #     'taxonKey': 'int64',
-        #     'kingdom': pd.api.types.StringDtype(),
-        #     'phylum': pd.api.types.StringDtype(),
-        #     'class': pd.api.types.StringDtype(),
-        #     'order': pd.api.types.StringDtype(),
-        #     'family': pd.api.types.StringDtype(),
-        #     'genus': pd.api.types.StringDtype(),
-        #     'species': pd.api.types.StringDtype(),
-        #     'decimalLatitude': 'float64',
-        #     'decimalLongitude': 'float64',
-        #     'coordinateUncertaintyInMeters': 'float64',
-        #     'countryCode': pd.api.types.StringDtype(),
-        #     'stateProvince': pd.api.types.StringDtype(),
-        #     'locality': pd.api.types.StringDtype(),
-        #     'county': pd.api.types.StringDtype(), # NEW COLUMN
-        #     'cityOrTown': pd.api.types.StringDtype(), # NEW COLUMN
-        #     'individualCount': 'int64',
-        #     'basisOfRecord': pd.api.types.StringDtype(),
-        #     'recordedBy': pd.api.types.StringDtype(),
-        #     'occurrenceID': pd.api.types.StringDtype(),
-        #     'collectionCode': pd.api.types.StringDtype(),
-        #     'catalogNumber': pd.api.types.StringDtype(),
-        #     'year': 'int64',
-        #     'month': 'int64',
-        #     'day': 'int64',
-        #     'day_of_week': 'int64',
-        #     'week_of_year': 'int64',
-        #     'date_only': 'object' # Store as object or convert to string if only date part is needed
-        # }
-
-        # Filter dtype_mapping to include only columns present in the DataFrame
-        # and ensure pandas Dtype objects are handled for to_sql
-        # to_sql often prefers string names for some types.
-        # Let's simplify and rely on pandas default type conversion first,
-        # then if issues, specify in the DB schema or in to_sql.
-        # For 'string' dtypes, pandas automatically maps to TEXT in PG.
-
         # Ensure all string-like columns are explicitly cast to str to prevent issues with mixed types/NAs
         for col in df.columns:
             # Check for pandas object dtype (often used for strings or mixed types)
