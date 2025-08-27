@@ -343,6 +343,15 @@ def produce_batch_coordinates(the_batch_payload, the_batch_size, the_selected_ba
     return all_batch_results
 
  
+# CHQ: Gemini AI generated function
+def run_time_analysis(the_df, event_to_extract_time_from):
+    df_transformed = the_df
+
+    # Create a new column 'time_only' to store the extracted time
+    # .dt.time extracts only the time part (HH:MM:SS) from the datetime object
+    df_transformed['time_only'] = event_to_extract_time_from['eventDateParsed'].dt.time
+    
+    return df_transformed
 
 def run_batch_analysis(the_df, coords_to_enrich):
     df_transformed = the_df
@@ -445,6 +454,26 @@ def run_individual_analysis(thedf):
     return df_transformed
 
 
+
+def attach_time_discovered_info(the_df):
+    df_transformed = the_df
+
+    df_final = df_transformed
+
+    # Prepare data for batch processing: select only rows with valid coordinates
+    event_date_to_parse = df_transformed[
+        df_transformed['eventDateParsed'].notna()
+    ].copy() # Use .copy() to ensure you're working on a copy and avoid warnings
+
+    if not event_date_to_parse.empty:
+        # Create a list of dictionaries, each containing the necessary info for the AI endpoint
+        # Important: Pass a unique identifier (like gbifID) if you have duplicate lat/lon pairs
+        # so you can accurately map results back.
+        df_final = run_time_analysis(df_transformed, event_date_to_parse)
+
+    return df_final
+
+
 def attach_city_county_info(the_df):
     df_transformed = the_df
 
@@ -484,9 +513,11 @@ def transform_gbif_data(raw_data):
 
     df_transformed = clean_data(df)
 
-    final_df = attach_city_county_info(df_transformed)
+    next_to_final_df = attach_city_county_info(df_transformed)
 
-    logger.info(f"Finished enriching location data with AI endpoint.")
+    final_df = attach_time_discovered_info(next_to_final_df)
+
+    logger.info(f"Finished enriching location data with reverse geocaching.")
 
     logger.info(f"Finished transformation. Transformed records: {len(final_df)}.")
     return final_df
