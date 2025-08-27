@@ -28,9 +28,7 @@ NEON_DB_USER = os.getenv('NEON_DB_USER')
 NEON_DB_PASSWORD = os.getenv('NEON_DB_PASSWORD')
 NEON_DB_PORT = os.getenv('NEON_DB_PORT', '5432')
 
-# --- AI Endpoint Configuration (READ FROM ENVIRONMENT VARIABLE) ---
-# Ensure this environment variable is set in your GitHub Actions secrets or local environment
-AI_ENDPOINT_BASE_URL = os.getenv('AI_ENDPOINT_BASE_URL')
+GOOGLE_VM_DOCKER_HOSTED_SQL = os.getenv('GOOGLE_VM_DOCKER_HOSTED_SQL', '5432')
 
 REVERSE_GEOCACHE_API_BASE = os.getenv('REVERSE_GEOCACHE_API_BASE')
 REVERSE_GEOCACHE_API_KEY = os.getenv('REVERSE_GEOCACHE_API_KEY')
@@ -494,7 +492,7 @@ def transform_gbif_data(raw_data):
     return final_df
  
 # --- Load Function (Placeholder for Database Interaction) ---
-def load_data(df, table_name="gbif_occurrences"):
+def load_data(df, conn_string, table_name="gbif_occurrences"):
     """
     Loads the transformed DataFrame into the Neon PostgreSQL database.
     """
@@ -507,10 +505,6 @@ def load_data(df, table_name="gbif_occurrences"):
         import psycopg2
         from sqlalchemy import create_engine
 
-        conn_string = (
-            f"postgresql+psycopg2://{NEON_DB_USER}:{NEON_DB_PASSWORD}@"
-            f"{NEON_DB_HOST}:{NEON_DB_PORT}/{NEON_DB_NAME}"
-        )
         engine = create_engine(conn_string)
 
         logger.info(f"Attempting to load {len(df)} records into '{table_name}' table...")
@@ -588,7 +582,7 @@ def load_data(df, table_name="gbif_occurrences"):
 
 
 # --- Main ETL Orchestration Function ---
-def monarch_etl(year, month):
+def monarch_etl(year, month, conn_string):
     """
     Orchestrates the ETL process for Monarch Butterfly data for a given month and year.
     """
@@ -629,8 +623,8 @@ def monarch_etl(year, month):
         transformed_df = transform_gbif_data(raw_data)
         if not transformed_df.empty:
             logger.info("\n\n\n--- LOAD STEP ---\n\n\n")
-            load_data(transformed_df, my_calendar[target_month] + " " + str(target_year))
-            # load_data(transformed_df, calendar.month_name[target_month] + " " + str(target_year))
+            load_data(transformed_df, conn_string, my_calendar[month] + " " + str(year))
+            # load_data(transformed_df, conn_string, calendar.month_name[month] + " " + str(year))
         else:
             logger.info("Transformed DataFrame is empty. No data to load.")
     else:
@@ -640,7 +634,7 @@ def monarch_etl(year, month):
 
 # --- Main ETL Orchestration Function ---
 # --- Main ETL Orchestration Function ---
-def monarch_etl_day_scan(year, month, day):
+def monarch_etl_day_scan(year, month, day, conn_string):
     """
     Orchestrates the ETL process for Monarch Butterfly data for a given month and year.
     """
@@ -672,7 +666,8 @@ def monarch_etl_day_scan(year, month, day):
             logger.info("\n\n\n--- LOAD STEP ---\n\n\n")
             # Corrected line: pass the variables directly to the table name string
             table_name = f"{my_calendar[month]}{day}{year}" 
-            load_data(transformed_df, table_name)
+            # table_name = f"{my_calendar[month]}_{day}_{year}" 
+            load_data(transformed_df, conn_string, table_name)
         else:
             logger.info("Transformed DataFrame is empty. No data to load.")
     else:
@@ -680,6 +675,6 @@ def monarch_etl_day_scan(year, month, day):
 
     logger.info("--- ETL process finished ---")
 
-def monarch_etl_multi_day_scan(year, month, day_start, day_end):
+def monarch_etl_multi_day_scan(year, month, day_start, day_end, conn_string):
     for chosen_day in range(day_start, day_end+1):
-        monarch_etl_day_scan(year, month, chosen_day) # For Jun 30 2025 # had 164 entries
+        monarch_etl_day_scan(year, month, chosen_day, conn_string) # For Jun 30 2025 # had 164 entries
