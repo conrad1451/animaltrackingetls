@@ -63,8 +63,8 @@ jobs:
 
       - name: Run ETL Script
         id: run_script
-        run: python etl_past_day_script.py 2>&1 | tee etl_output.log
-        # run: python etl_script.py 2>&1 | tee etl_output.log
+        # run: python etl_past_day_script.py 2>&1 | tee etl_output.log
+        run: python etl_script.py 2>&1 | tee etl_output.log
 
       # The validation step is correctly placed here, after the script has run
       - name: Validate Load Step Dependencies
