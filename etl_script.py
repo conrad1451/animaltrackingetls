@@ -17,7 +17,6 @@ GOOGLE_VM_DOCKER_HOSTED_SQL = os.getenv('GOOGLE_VM_DOCKER_HOSTED_SQL', '5432')
  
 # REVERSE_GEOCACHE_API_BASE = os.getenv('REVERSE_GEOCACHE_API_BASE')
 # REVERSE_GEOCACHE_API_KEY = os.getenv('REVERSE_GEOCACHE_API_KEY')
- 
 
 if __name__ == '__main__':
     # --- Example Usage for a specific month (e.g., June 2025) ---
