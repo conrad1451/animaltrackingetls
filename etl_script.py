@@ -42,5 +42,6 @@ if __name__ == '__main__':
     # monarch_etl(target_year, target_month)
 
     # monarch_etl_multi_day_scan(2025, 6, 23, 25)
-    monarch_butterfly_module.monarch_etl_multi_day_scan(2025, 6, 21, 22, conn_string)
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2025, 6, 21, 22, conn_string)
+    monarch_butterfly_module.monarch_etl_multi_day_scan(2025, 6, 18, 20, conn_string)
     # monarch_butterfly_module.monarch_etl_multi_day_scan(2025, 6, 27, 30, conn_string)
