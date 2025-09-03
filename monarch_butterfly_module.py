@@ -645,8 +645,14 @@ def monarch_etl_day_scan(year, month, day, conn_string):
         if not transformed_df.empty:
             logger.info("\n\n\n--- LOAD STEP ---\n\n\n")
             # Corrected line: pass the variables directly to the table name string
-            table_name = f"{my_calendar[month]}{day}{year}" 
-            # table_name = f"{my_calendar[month]}_{day}_{year}" 
+
+            table_name = ""
+
+            if(day < 10):
+                table_name = f"{my_calendar[month]}0{day}{year}" 
+            else:
+                table_name = f"{my_calendar[month]}{day}{year}" 
+ 
             load_data(transformed_df, conn_string, table_name)
         else:
             logger.info("Transformed DataFrame is empty. No data to load.")
