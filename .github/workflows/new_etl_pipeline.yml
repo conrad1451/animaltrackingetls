@@ -22,10 +22,8 @@ on:
   # - cron: "52 18 * * *"
   # test time of 130am NYC time (530 UTC) - 0130 + 4h offest
   # - cron: "30 5 * * *"
-
   # test time of 640am NYC time (1040 UTC) - 0640 + 4h offest
   # - cron: "40 10 * * *"
-
   # test time of 310am NYC time (0710 UTC) - 0310 + 4h offest
   # - cron: "10 7 * * 4"
   # - cron: "0 0 * * 0"  # Runs every Sunday at midnight UTC # Google Search (can you make a yaml file run a job monthly?)
