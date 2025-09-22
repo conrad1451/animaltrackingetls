@@ -579,7 +579,7 @@ def transform_gbif_data(raw_data):
 # --- Load Function (Placeholder for Database Interaction) ---
 def load_data(df, conn_string, table_name="gbif_occurrences"):
     """
-    Loads the transformed DataFrame into the PostgreSQL database
+    Loads the transformed DataFrame into the Neon PostgreSQL database
     using a predefined dtype map to ensure correct column types.
     """
     if df.empty:
@@ -588,19 +588,16 @@ def load_data(df, conn_string, table_name="gbif_occurrences"):
 
     try:
         from sqlalchemy import create_engine
-        from sqlalchemy.types import BigInteger, String, DateTime, Float, Integer, Date # Import necessary SQLAlchemy types
+        from sqlalchemy.types import String, DateTime, Float, BigInteger, Integer, Date
 
         engine = create_engine(conn_string)
 
         logger.info(f"Attempting to load {len(df)} records into '{table_name}' table...")
 
-        # A more concise way to handle string conversion
-        for col in df.columns:
-            if df[col].dtype == 'object':
-                df[col] = df[col].astype(str).replace({'None': None, 'nan': None})
-        
-        # --- Define the explicit type mapping for to_sql ---
-        # This dictionary ensures each column gets the correct SQL data type.
+        # NOTE: This line is no longer necessary as the dtype mapping will handle NaT
+        # df['date_only'] = df['date_only'].astype(str).replace({'NaT': None})
+
+        # CHQ: Corrected dtype mapping to use SQLAlchemy types
         dtype_mapping = {
             'gbifID': String,
             'datasetKey': String,
@@ -637,17 +634,16 @@ def load_data(df, conn_string, table_name="gbif_occurrences"):
             'month': Integer,
             'day': Integer,
             'day_of_week': Integer,
-            'week_of_year': BigInteger, # Use BigInteger for 'week_of_year'
-            'date_only': Date
+            'week_of_year': BigInteger,
+            'date_only': Date  # This is the key fix
         }
 
-        # --- Pass the dtype_mapping to the to_sql method ---
+        # The to_sql call now includes the dtype mapping
         df.to_sql(table_name, engine, if_exists='append', index=False, dtype=dtype_mapping)
         logger.info(f"Successfully loaded {len(df)} records into '{table_name}'.")
 
     except Exception as e:
         logger.error(f"Error loading data into database: {e}", exc_info=True)
-
 # --- Main ETL Orchestration Function ---
 def monarch_etl(year, month, conn_string):
     """
