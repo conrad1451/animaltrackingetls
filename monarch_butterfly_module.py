@@ -256,6 +256,11 @@ def clean_data(df):
     df.dropna(subset=['eventDateParsed'], inplace=True)
     logger.info(f"After date parsing: {len(df)} records.")
 
+    # --- CHQ: Gemini AI FIX START ---
+    # Explicitly convert the column to datetime objects
+    df['eventDateParsed'] = pd.to_datetime(df['eventDateParsed'], errors='coerce')
+    # --- CHQ: Gemini AI FIX END ---
+
     # 2. Convert coordinates to numeric, coercing errors to NaN
     df['decimalLatitude'] = pd.to_numeric(df['decimalLatitude'], errors='coerce')
     df['decimalLongitude'] = pd.to_numeric(df['decimalLongitude'], errors='coerce')
