@@ -74,6 +74,17 @@ jobs:
             echo "Date conversion check passed. No 'dt' accessor error found."
           fi
 
+      # CHQ: Step added by me
+      # New Step to catch the specific date error
+      - name: Validate Incompatible Data types with Date Error
+        run: |
+          if grep -q "cannot convert NA to integer" etl_output.log; then
+            echo "::error::ETL run failed: A incompatible data type with date error was detected."
+            exit 1 # Exit with a non-zero status to fail the job
+          else
+            echo "Date data types check passed."
+          fi
+
       # The validation step is correctly placed here, after the script has run
       - name: Validate Load Step Dependencies
         run: |

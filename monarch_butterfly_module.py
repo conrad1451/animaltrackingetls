@@ -11,6 +11,11 @@ from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_excep
 # import calendar
 import math
 
+import psycopg2
+# from sqlalchemy import create_engine, BigInteger
+from sqlalchemy import create_engine
+from sqlalchemy.types import BigInteger
+
 # --- Configure Logging ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -283,7 +288,7 @@ def clean_data(df):
         df['month'] = df['eventDateParsed'].dt.month
         df['day'] = df['eventDateParsed'].dt.day
         df['day_of_week'] = df['eventDateParsed'].dt.dayofweek
-        df['week_of_year'] = df['eventDateParsed'].dt.isocalendar().week.astype(int)
+        df['week_of_year'] = df['eventDateParsed'].dt.isocalendar().week.fillna(-1).astype(int)
         df['date_only'] = df['eventDateParsed'].dt.date
     else:
         df['year'] = pd.NA
@@ -537,10 +542,10 @@ def load_data(df, conn_string, table_name="gbif_occurrences"):
         logger.info("No data to load.")
         return
 
-    # CHQ: Gemini AI moved imports in here for optimized performance
+    # CHQ: Gemini AI moved imports in here for optimized performance. I am moving it back out to ensure correctness
     try:
-        import psycopg2
-        from sqlalchemy import create_engine
+        # import psycopg2
+        # from sqlalchemy import create_engine
 
         engine = create_engine(conn_string)
 
