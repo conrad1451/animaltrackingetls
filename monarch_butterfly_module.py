@@ -580,7 +580,7 @@ def monarch_etl(year, month, conn_string):
         8: "august",
         9: "september",
         10: "october",
-        11: "novemeber",
+        11: "november",
         12: "december",
     }
 

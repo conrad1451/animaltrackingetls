@@ -507,7 +507,7 @@ def run_monarch_etl(year, month, conn_string):
         8: "August",
         9: "September",
         10: "October",
-        11: "Novemeber",
+        11: "November",
         12: "December",
     }
 
