@@ -288,7 +288,7 @@ def clean_data(df):
         df['month'] = df['eventDateParsed'].dt.month
         df['day'] = df['eventDateParsed'].dt.day
         df['day_of_week'] = df['eventDateParsed'].dt.dayofweek
-        df['week_of_year'] = df['eventDateParsed'].dt.isocalendar().week.fillna(-1).astype(int)
+        df['week_of_year'] = df['eventDateParsed'].dt.isocalendar().week.fillna(111).astype(int)
         df['date_only'] = df['eventDateParsed'].dt.date
     else:
         df['year'] = pd.NA
