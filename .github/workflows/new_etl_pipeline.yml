@@ -1,7 +1,5 @@
 # .github/workflows/new_etl_pipeline.yml
 
-# CHQ: Gemini AI generated code
-
 name: New Monarch ETL Pipeline (No AI scanning)
 
 on:
@@ -64,6 +62,17 @@ jobs:
         id: run_script
         # run: python etl_past_day_script.py 2>&1 | tee etl_output.log
         run: python etl_script.py 2>&1 | tee etl_output.log
+
+      # CHQ: step added by Gemini AI
+      # New Step to catch the specific date error
+      - name: Validate Date Conversion Error
+        run: |
+          if grep -q "AttributeError: 'No data' has no attribute 'dt'" etl_output.log; then
+            echo "::error::ETL run failed: A date conversion error was detected."
+            exit 1 # Exit with a non-zero status to fail the job
+          else
+            echo "Date conversion check passed. No 'dt' accessor error found."
+          fi
 
       # The validation step is correctly placed here, after the script has run
       - name: Validate Load Step Dependencies
