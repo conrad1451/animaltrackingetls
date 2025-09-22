@@ -579,41 +579,74 @@ def transform_gbif_data(raw_data):
 # --- Load Function (Placeholder for Database Interaction) ---
 def load_data(df, conn_string, table_name="gbif_occurrences"):
     """
-    Loads the transformed DataFrame into the Neon PostgreSQL database.
+    Loads the transformed DataFrame into the PostgreSQL database
+    using a predefined dtype map to ensure correct column types.
     """
     if df.empty:
         logger.info("No data to load.")
         return
 
-    # CHQ: Gemini AI moved imports in here for optimized performance. I am moving it back out to ensure correctness
     try:
-        # import psycopg2
-        # from sqlalchemy import create_engine
+        from sqlalchemy import create_engine
+        from sqlalchemy.types import BigInteger, String, DateTime, Float, Integer, Date # Import necessary SQLAlchemy types
 
         engine = create_engine(conn_string)
 
         logger.info(f"Attempting to load {len(df)} records into '{table_name}' table...")
 
-        # Ensure all string-like columns are explicitly cast to str to prevent issues with mixed types/NAs
+        # A more concise way to handle string conversion
         for col in df.columns:
-            # Check for pandas object dtype (often used for strings or mixed types)
-            # and if the column isn't numeric or datetime
-            if df[col].dtype == 'object' and col not in ['eventDateParsed', 'date_only']:
-                df[col] = df[col].astype(str).replace({'None': None, 'nan': None}) # Convert None/NaN str to actual None
+            if df[col].dtype == 'object':
+                df[col] = df[col].astype(str).replace({'None': None, 'nan': None})
+        
+        # --- Define the explicit type mapping for to_sql ---
+        # This dictionary ensures each column gets the correct SQL data type.
+        dtype_mapping = {
+            'gbifID': String,
+            'datasetKey': String,
+            'datasetName': String,
+            'publishingOrgKey': String,
+            'publishingOrganizationTitle': String,
+            'eventDate': String,
+            'eventDateParsed': DateTime,
+            'scientificName': String,
+            'vernacularName': String,
+            'taxonKey': BigInteger,
+            'kingdom': String,
+            'phylum': String,
+            'class': String,
+            'order': String,
+            'family': String,
+            'genus': String,
+            'species': String,
+            'decimalLatitude': Float,
+            'decimalLongitude': Float,
+            'coordinateUncertaintyInMeters': Float,
+            'countryCode': String,
+            'stateProvince': String,
+            'locality': String,
+            'county': String,
+            'cityOrTown': String,
+            'individualCount': BigInteger,
+            'basisOfRecord': String,
+            'recordedBy': String,
+            'occurrenceID': String,
+            'collectionCode': String,
+            'catalogNumber': String,
+            'year': Integer,
+            'month': Integer,
+            'day': Integer,
+            'day_of_week': Integer,
+            'week_of_year': BigInteger, # Use BigInteger for 'week_of_year'
+            'date_only': Date
+        }
 
-        # Convert date_only to string if the database doesn't support date object directly
-        # or if you prefer string representation
-        df['date_only'] = df['date_only'].astype(str).replace({'NaT': None})
-
-
-        df.to_sql(table_name, engine, if_exists='append', index=False)
+        # --- Pass the dtype_mapping to the to_sql method ---
+        df.to_sql(table_name, engine, if_exists='append', index=False, dtype=dtype_mapping)
         logger.info(f"Successfully loaded {len(df)} records into '{table_name}'.")
 
-    except ImportError:
-        logger.error("psycopg2 or SQLAlchemy not installed. Please install them (`pip install psycopg2-binary sqlalchemy`).")
     except Exception as e:
         logger.error(f"Error loading data into database: {e}", exc_info=True)
-
 
 # --- Main ETL Orchestration Function ---
 def monarch_etl(year, month, conn_string):
