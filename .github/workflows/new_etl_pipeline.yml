@@ -78,7 +78,7 @@ jobs:
       # New Step to catch the specific date error
       - name: Validate Incompatible Data types with Date Error
         run: |
-          if grep -q "cannot convert NA to integer" etl_output.log; then
+          if grep -q "ValueError: cannot convert NA to integer" etl_output.log; then
             echo "::error::ETL run failed: A incompatible data type with date error was detected."
             exit 1 # Exit with a non-zero status to fail the job
           else
