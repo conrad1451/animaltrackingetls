@@ -116,7 +116,14 @@ jobs:
         #   else
         #     echo "ETL run completed with data loaded (or no 'no data' warning found)."
         #   fi
-
+      - name: Check Database connection string to ensure it is correct
+        run: |
+          if grep "FATAL ERROR: DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL_ALT environment variable is NOT SET." etl_output.log; then
+            echo "::error::ETL run considered a failure: Error for a record."
+            exit 1 # Exit with a non-zero status to mark the job as failed
+          else
+            echo "ETL run completed with successful loading into database."
+          fi
       - name: Check for new data
         # (Optional: for debugging)
         # You could add steps here to verify data in Neon, e.g., using psql
