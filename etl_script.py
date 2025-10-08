@@ -15,7 +15,19 @@ NEON_DB_PORT = os.getenv('NEON_DB_PORT', '5432')
 
 # GOOGLE_VM_DOCKER_HOSTED_SQL = os.getenv('GOOGLE_VM_DOCKER_HOSTED_SQL', '5432')
 # DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL = os.getenv('DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL', '5432')
-DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL = os.getenv('DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL_ALT', '5432')
+# DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL = os.getenv('DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL_ALT', '5432')
+
+# Remove the default value. If the variable isn't found, it will be None.
+DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL = os.getenv('DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL_ALT')
+
+
+if not DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL:
+    print("FATAL ERROR: DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL_ALT environment variable is NOT SET.")
+    # Exit gracefully or raise an error
+    exit(1)
+
+conn_string_digital_ocean = DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL
+conn_string = conn_string_digital_ocean
 
 
 # REVERSE_GEOCACHE_API_BASE = os.getenv('REVERSE_GEOCACHE_API_BASE')
@@ -39,9 +51,9 @@ if __name__ == '__main__':
 
     # conn_string_gcp_docker = GOOGLE_VM_DOCKER_HOSTED_SQL
 
-    conn_string_digital_ocean = DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL
+    # conn_string_digital_ocean = DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL
 
-    conn_string = conn_string_digital_ocean
+    # conn_string = conn_string_digital_ocean
     # conn_string = conn_string_neon
     # conn_string = conn_string_gcp_docker
     # This will attempt to run for the next month
