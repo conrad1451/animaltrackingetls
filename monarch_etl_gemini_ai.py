@@ -552,7 +552,7 @@ def run_monarch_etl_alt(year, month, day, conn_string):
 
     my_calendar = {
         1: "January", 2: "February", 3: "March", 4: "April", 5: "May", 6: "June",
-        7: "July", 8: "August", 9: "September", 10: "October", 11: "Novemeber", 12: "December",
+        7: "July", 8: "August", 9: "September", 10: "October", 11: "November", 12: "December",
     }
 
     logger.info(f"\n\nRunning ETL for {year}-{month}-{day} \n")

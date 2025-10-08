@@ -704,7 +704,7 @@ def monarch_etl_day_scan(year, month, day, conn_string):
 
     my_calendar = {
         1: "january", 2: "february", 3: "march", 4: "april", 5: "may", 6: "june",
-        7: "july", 8: "august", 9: "september", 10: "october", 11: "novemeber", 12: "december",
+        7: "july", 8: "august", 9: "september", 10: "october", 11: "november", 12: "december",
     }
 
     logger.info(f"\n\nRunning ETL for {year}-{month}-{day} \n")
