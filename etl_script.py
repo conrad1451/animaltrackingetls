@@ -13,8 +13,9 @@ NEON_DB_USER = os.getenv('NEON_DB_USER')
 NEON_DB_PASSWORD = os.getenv('NEON_DB_PASSWORD')
 NEON_DB_PORT = os.getenv('NEON_DB_PORT', '5432')
 
-GOOGLE_VM_DOCKER_HOSTED_SQL = os.getenv('GOOGLE_VM_DOCKER_HOSTED_SQL', '5432')
- 
+# GOOGLE_VM_DOCKER_HOSTED_SQL = os.getenv('GOOGLE_VM_DOCKER_HOSTED_SQL', '5432')
+DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL = os.getenv('DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL', '5432')
+
 # REVERSE_GEOCACHE_API_BASE = os.getenv('REVERSE_GEOCACHE_API_BASE')
 # REVERSE_GEOCACHE_API_KEY = os.getenv('REVERSE_GEOCACHE_API_KEY')
 
@@ -34,10 +35,13 @@ if __name__ == '__main__':
         f"{NEON_DB_HOST}:{NEON_DB_PORT}/{NEON_DB_NAME}"
     )
 
-    conn_string_gcp_docker = GOOGLE_VM_DOCKER_HOSTED_SQL
+    # conn_string_gcp_docker = GOOGLE_VM_DOCKER_HOSTED_SQL
 
+    conn_string_digital_ocean = DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL
+
+    conn_string = conn_string_digital_ocean
     # conn_string = conn_string_neon
-    conn_string = conn_string_gcp_docker
+    # conn_string = conn_string_gcp_docker
     # This will attempt to run for the next month
     # monarch_etl(target_year, target_month)
     # monarch_butterfly_module.monarch_etl_day_scan(2024, 8, 14, conn_string) # For Jun 30 2025 # had 164 entries
