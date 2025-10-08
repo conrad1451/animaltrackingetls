@@ -62,9 +62,9 @@ if __name__ == '__main__':
     # monarch_butterfly_module.monarch_etl_day_scan(2024, 8, 31, conn_string) # For Jun 30 2025 # had 164 entries
 
     # monarch_butterfly_module.monarch_etl_multi_day_scan(2023, 11, 1, 30, conn_string)
-    monarch_butterfly_module.monarch_etl_multi_day_scan(2023, 12, 1, 31, conn_string)
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2023, 12, 1, 31, conn_string)
 
-    # monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 1, 1, 31, conn_string)
+    monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 1, 1, 31, conn_string)
 
     # monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 8, 12, 13, conn_string)
 
