@@ -18,15 +18,23 @@ NEON_DB_PORT = os.getenv('NEON_DB_PORT', '5432')
 # DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL = os.getenv('DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL_ALT', '5432')
 
 # Remove the default value. If the variable isn't found, it will be None.
-DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL = os.getenv('DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL_ALT')
+# DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL = os.getenv('DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL_ALT')
 
+DIG_OCEAN_DROPLET_DOCKER_PSQL = os.getenv('DIG_OCEAN_DROPLET_DOCKER_PSQL')
 
-if not DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL:
-    print("FATAL ERROR: DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL_ALT environment variable is NOT SET.")
+if not DIG_OCEAN_DROPLET_DOCKER_PSQL:
+    print("FATAL ERROR: DIG_OCEAN_DROPLET_DOCKER_PSQL environment variable is NOT SET.")
     # Exit gracefully or raise an error
     exit(1)
 
-conn_string_digital_ocean = DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL
+conn_string_digital_ocean = DIG_OCEAN_DROPLET_DOCKER_PSQL
+
+# if not DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL:
+#     print("FATAL ERROR: DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL_ALT environment variable is NOT SET.")
+#     # Exit gracefully or raise an error
+#     exit(1)
+
+# conn_string_digital_ocean = DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL
 conn_string = conn_string_digital_ocean
 
 
@@ -58,9 +66,7 @@ if __name__ == '__main__':
     # conn_string = conn_string_gcp_docker
     # This will attempt to run for the next month
     # monarch_etl(target_year, target_month)
-    # monarch_butterfly_module.monarch_etl_day_scan(2024, 8, 14, conn_string) # For Jun 30 2025 # had 164 entries
-    # monarch_butterfly_module.monarch_etl_day_scan(2024, 8, 31, conn_string) # For Jun 30 2025 # had 164 entries
-
+ 
     # monarch_butterfly_module.monarch_etl_multi_day_scan(2023, 11, 1, 30, conn_string)
     # monarch_butterfly_module.monarch_etl_multi_day_scan(2023, 12, 1, 31, conn_string)
 
@@ -72,9 +78,25 @@ if __name__ == '__main__':
     # monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 4, 1, 30, conn_string)
     
     # monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 5, 1, 31, conn_string)
-    monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 6, 1, 30, conn_string)
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 6, 1, 30, conn_string)
 
     # monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 7, 1, 31, conn_string)
 
-    # monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 8, 1, 15, conn_string)
-    # monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 8, 16, 31, conn_string)
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 8, 1, 31, conn_string)
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 9, 1, 30, conn_string)
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 10, 1, 31, conn_string)
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 11, 1, 30, conn_string)
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 12, 1, 31, conn_string)
+
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2025, 1, 1, 31, conn_string)
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2025, 2, 1, 29, conn_string)
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2025, 3, 1, 31, conn_string)
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2025, 4, 1, 30, conn_string)
+    
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2025, 5, 1, 31, conn_string)
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2025, 6, 1, 30, conn_string)
+
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2025, 7, 1, 31, conn_string)
+
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2025, 8, 1, 31, conn_string)
+    monarch_butterfly_module.monarch_etl_multi_day_scan(2025, 9, 1, 30, conn_string)
