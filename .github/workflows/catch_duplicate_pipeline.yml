@@ -17,7 +17,7 @@ on:
     # new time of 2:52pm NYC time (1840 UTC) - 1440 + 4h offset
     # - cron: "52 18 * * *"
     # test time of 130am NYC time (530 UTC) - 0130 + 4h offest
-    - cron: "30 5 * * *"
+    # - cron: "30 5 * * *"
 
   # test time of 640am NYC time (1040 UTC) - 0640 + 4h offest
   # - cron: "40 10 * * *"
