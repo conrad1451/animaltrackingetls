@@ -80,9 +80,9 @@ if __name__ == '__main__':
     # monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 5, 1, 31, conn_string)
     # monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 6, 1, 30, conn_string)
 
-    # monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 7, 1, 31, conn_string)
+    monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 7, 1, 31, conn_string)
 
-    monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 8, 1, 31, conn_string)
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 8, 1, 31, conn_string)
     # monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 9, 1, 30, conn_string)
     # monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 10, 1, 31, conn_string)
     # monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 11, 1, 30, conn_string)
