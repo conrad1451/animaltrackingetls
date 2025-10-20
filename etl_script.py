@@ -66,8 +66,9 @@ if __name__ == '__main__':
     # conn_string = conn_string_gcp_docker
     # This will attempt to run for the next month
     # monarch_etl(target_year, target_month)
- 
-    monarch_butterfly_module.monarch_etl_multi_day_scan(2023, 11, 1, 30, conn_string)
+
+    monarch_butterfly_module.monarch_etl_multi_day_scan(2023, 10, 1, 31, conn_string) 
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2023, 11, 1, 30, conn_string)
     # monarch_butterfly_module.monarch_etl_multi_day_scan(2023, 12, 1, 31, conn_string)
 
 ###############################################################################################3
