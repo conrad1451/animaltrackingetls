@@ -6,7 +6,8 @@ on:
   # Trigger the workflow on pushes to the 'main' branch (for testing/initial setup)
   push:
     branches:
-      - main
+      # - main
+      - catch-duplicate-test
     paths:
       - "catch_duplicates_script.py"
       - ".github/workflows/catch_duplicate_pipeline.yml" # Rerun if workflow itself changes
