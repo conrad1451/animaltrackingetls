@@ -20,14 +20,14 @@ NEON_DB_PORT = os.getenv('NEON_DB_PORT', '5432')
 # Remove the default value. If the variable isn't found, it will be None.
 # DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL = os.getenv('DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL_ALT')
 
-DIG_OCEAN_DROPLET_DOCKER_PSQL = os.getenv('DIG_OCEAN_DROPLET_DOCKER_PSQL')
+IBM_DOCKER_PSQL_MONARCH = os.getenv('IBM_DOCKER_PSQL_MONARCH')
 
-if not DIG_OCEAN_DROPLET_DOCKER_PSQL:
-    print("FATAL ERROR: DIG_OCEAN_DROPLET_DOCKER_PSQL environment variable is NOT SET.")
+if not IBM_DOCKER_PSQL_MONARCH:
+    print("FATAL ERROR: IBM_DOCKER_PSQL_MONARCH environment variable is NOT SET.")
     # Exit gracefully or raise an error
     exit(1)
 
-conn_string_digital_ocean = DIG_OCEAN_DROPLET_DOCKER_PSQL
+conn_string_digital_ocean = IBM_DOCKER_PSQL_MONARCH
 
 # if not DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL:
 #     print("FATAL ERROR: DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL_ALT environment variable is NOT SET.")
