@@ -20,14 +20,21 @@ NEON_DB_PORT = os.getenv('NEON_DB_PORT', '5432')
 # Remove the default value. If the variable isn't found, it will be None.
 # DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL = os.getenv('DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL_ALT')
 
-IBM_DOCKER_PSQL_MONARCH = os.getenv('IBM_DOCKER_PSQL_MONARCH')
+# IBM_DOCKER_PSQL_MONARCH = os.getenv('IBM_DOCKER_PSQL_MONARCH')
+XATA_DB_MONARCH = os.getenv('XATA_DB_MONARCH')
 
-if not IBM_DOCKER_PSQL_MONARCH:
-    print("FATAL ERROR: IBM_DOCKER_PSQL_MONARCH environment variable is NOT SET.")
+# if not IBM_DOCKER_PSQL_MONARCH:
+#     print("FATAL ERROR: IBM_DOCKER_PSQL_MONARCH environment variable is NOT SET.")
+#     # Exit gracefully or raise an error
+#     exit(1)
+
+if not XATA_DB_MONARCH:
+    print("FATAL ERROR: XATA_DB_MONARCH environment variable is NOT SET.")
     # Exit gracefully or raise an error
     exit(1)
 
-conn_string_digital_ocean = IBM_DOCKER_PSQL_MONARCH
+conn_string_xata = XATA_DB_MONARCH
+# conn_string_digital_ocean = IBM_DOCKER_PSQL_MONARCH
 
 # if not DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL:
 #     print("FATAL ERROR: DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL_ALT environment variable is NOT SET.")
@@ -35,8 +42,8 @@ conn_string_digital_ocean = IBM_DOCKER_PSQL_MONARCH
 #     exit(1)
 
 # conn_string_digital_ocean = DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL
-conn_string = conn_string_digital_ocean
-
+# conn_string = conn_string_digital_ocean
+conn_string = conn_string_xata
 
 # REVERSE_GEOCACHE_API_BASE = os.getenv('REVERSE_GEOCACHE_API_BASE')
 # REVERSE_GEOCACHE_API_KEY = os.getenv('REVERSE_GEOCACHE_API_KEY')
