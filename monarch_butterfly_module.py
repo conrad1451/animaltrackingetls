@@ -645,19 +645,26 @@ def load_data(df, conn_string, table_name="gbif_occurrences"):
     except Exception as e:
         logger.error(f"Error loading data into database: {e}", exc_info=True)
 
+# CHQ: Gemini AI fixed function to pass parameters as a dictionary 
 # Inside your load logic after the data is successfully saved to the new table
 def register_date_in_inventory(engine, date_obj, table_name, count):
-    query = """
+    # Use named parameters (starting with :)
+    query = text("""
     INSERT INTO data_inventory (available_date, table_name, record_count)
-    VALUES (%s, %s, %s)
+    VALUES (:date_val, :table_val, :count_val)
     ON CONFLICT (available_date) DO UPDATE SET 
         table_name = EXCLUDED.table_name,
         record_count = EXCLUDED.record_count,
         processed_at = CURRENT_TIMESTAMP;
-    """
+    """)
+    
     with engine.begin() as conn:
-        conn.execute(query, (date_obj, table_name, count))
-
+        # PASS AS A DICTIONARY
+        conn.execute(query, {
+            "date_val": date_obj,
+            "table_val": table_name,
+            "count_val": count
+        })
 # --- Main ETL Orchestration Function ---
 def monarch_etl(year, month, conn_string):
     """
