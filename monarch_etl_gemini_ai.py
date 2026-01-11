@@ -488,18 +488,6 @@ def load_data(conn_string, df, table_name="gbif_occurrences"):
     except Exception as e:
         logger.error(f"Error loading data into database: {e}", exc_info=True)
 
-# Inside your load logic after the data is successfully saved to the new table
-def register_date_in_inventory(engine, date_obj, table_name, count):
-    query = """
-    INSERT INTO data_inventory (available_date, table_name, record_count)
-    VALUES (%s, %s, %s)
-    ON CONFLICT (available_date) DO UPDATE SET 
-        table_name = EXCLUDED.table_name,
-        record_count = EXCLUDED.record_count,
-        processed_at = CURRENT_TIMESTAMP;
-    """
-    with engine.begin() as conn:
-        conn.execute(query, (date_obj, table_name, count))
 
 # --- Main ETL Orchestration Function ---
 def run_monarch_etl(year, month, conn_string):
@@ -546,26 +534,7 @@ def run_monarch_etl(year, month, conn_string):
         transformed_df = transform_gbif_data(raw_data)
         if not transformed_df.empty:
             logger.info("\n\n\n--- LOAD STEP ---\n\n\n")
-            # table_name = f"{my_calendar[month]} {day} {year}" 
-            table_name = my_calendar[target_month] + " " + str(target_year)
-            
-            # 1. Load the actual data
-            load_data(conn_string, transformed_df, table_name)
-            
-            # 2. Register the completion in the inventory table
-            from sqlalchemy import create_engine # Ensure engine is available
-            engine = create_engine(conn_string)
-            
-            # Create a date object for the inventory
-            date_obj = datetime(year, month, day).date()
-            record_count = len(transformed_df)
-            
-            logger.info(f"Registering {date_obj} in data_inventory...")
-            register_date_in_inventory(engine, date_obj, table_name, record_count)
-            
-            # logger.info("\n\n\n--- LOAD STEP ---\n\n\n")
-            load_data(conn_string, transformed_df, table_name)
-            # load_data(conn_string, transformed_df, my_calendar[target_month] + " " + str(target_year))
+            load_data(conn_string, transformed_df, my_calendar[target_month] + " " + str(target_year))
             # load_data(conn_string, transformed_df, calendar.month_name[target_month] + " " + str(target_year))
         else:
             logger.info("Transformed DataFrame is empty. No data to load.")
