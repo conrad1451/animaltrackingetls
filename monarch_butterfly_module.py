@@ -665,6 +665,25 @@ def register_date_in_inventory(engine, date_obj, table_name, count):
             "table_name": table_name,
             "record_count": count
         })
+
+# CHQ: Gemini AI created function to format table as dataframe and then convert to sql
+def register_date_in_inventory_as_df(engine, date_obj, table_name, count):
+    # Create a dictionary for the single row
+    inventory_data = {
+        'available_date': [date_obj],
+        'table_name': [table_name],
+        'record_count': [count],
+        'processed_at': [pd.Timestamp.now()]
+    }
+    
+    inventory_df = pd.DataFrame(inventory_data)
+    
+    # Load it using to_sql just like your other data
+    # Note: Use if_exists='append'
+    inventory_df.to_sql('data_inventory', engine, if_exists='append', index=False)
+    logger.info(f"Inventory updated for {date_obj} via DataFrame.")
+
+
 # --- Main ETL Orchestration Function ---
 def monarch_etl(year, month, conn_string):
     """
@@ -768,7 +787,8 @@ def monarch_etl_day_scan(year, month, day, conn_string):
             record_count = len(transformed_df)
             
             logger.info(f"Registering {date_obj} in data_inventory...")
-            register_date_in_inventory(engine, date_obj, table_name, record_count)
+            # register_date_in_inventory(engine, date_obj, table_name, record_count)
+            register_date_in_inventory_as_df(engine, date_obj, table_name, record_count)
             
         else:
             logger.info("Transformed DataFrame is empty. No data to load.")
