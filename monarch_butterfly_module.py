@@ -13,7 +13,7 @@ import math
 
 import psycopg2
 # from sqlalchemy import create_engine, BigInteger
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.types import BigInteger
 
 # from dataclasses import dataclass
@@ -648,10 +648,11 @@ def load_data(df, conn_string, table_name="gbif_occurrences"):
 # CHQ: Gemini AI fixed function to pass parameters as a dictionary 
 # Inside your load logic after the data is successfully saved to the new table
 def register_date_in_inventory(engine, date_obj, table_name, count):
-    # Use named parameters (starting with :)
+    # 1. Use named placeholders (:key) instead of %s
+    # 2. Wrap the string in the text() function
     query = text("""
     INSERT INTO data_inventory (available_date, table_name, record_count)
-    VALUES (:date_val, :table_val, :count_val)
+    VALUES (:available_date, :table_name, :record_count)
     ON CONFLICT (available_date) DO UPDATE SET 
         table_name = EXCLUDED.table_name,
         record_count = EXCLUDED.record_count,
@@ -659,12 +660,13 @@ def register_date_in_inventory(engine, date_obj, table_name, count):
     """)
     
     with engine.begin() as conn:
-        # PASS AS A DICTIONARY
+        # 3. Pass parameters as a dictionary
         conn.execute(query, {
-            "date_val": date_obj,
-            "table_val": table_name,
-            "count_val": count
+            "available_date": date_obj,
+            "table_name": table_name,
+            "record_count": count
         })
+
 # --- Main ETL Orchestration Function ---
 def monarch_etl(year, month, conn_string):
     """
