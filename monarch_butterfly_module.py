@@ -648,8 +648,7 @@ def load_data(df, conn_string, table_name="gbif_occurrences"):
 # CHQ: Gemini AI fixed function to pass parameters as a dictionary 
 # Inside your load logic after the data is successfully saved to the new table
 def register_date_in_inventory(engine, date_obj, table_name, count):
-    # 1. Use named placeholders (:key) instead of %s
-    # 2. Wrap the string in the text() function
+    # 1. Use named placeholders (:key)
     query = text("""
     INSERT INTO data_inventory (available_date, table_name, record_count)
     VALUES (:available_date, :table_name, :record_count)
@@ -660,13 +659,12 @@ def register_date_in_inventory(engine, date_obj, table_name, count):
     """)
     
     with engine.begin() as conn:
-        # 3. Pass parameters as a dictionary
+        # 2. Pass as a DICTIONARY to satisfy SQLAlchemy 2.0
         conn.execute(query, {
             "available_date": date_obj,
             "table_name": table_name,
             "record_count": count
         })
-
 # --- Main ETL Orchestration Function ---
 def monarch_etl(year, month, conn_string):
     """
