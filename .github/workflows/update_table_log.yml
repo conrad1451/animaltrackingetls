@@ -1,0 +1,183 @@
+# .github/workflows/new_etl_pipeline.yml
+
+name: Table Tracking
+
+on:
+  # Trigger the workflow on pushes to the 'main' branch (for testing/initial setup)
+  push:
+    branches:
+      - main
+    paths:
+      - "etl_script.py"
+      - "etl_past_day_script.py"
+      - "requirements.txt"
+      - ".github/workflows/new_etl_pipeline.yml" # Rerun if workflow itself changes
+
+  # Trigger the workflow on a schedule (e.g., daily at 02:00 UTC)
+  # schedule:
+  # Uses cron syntax. Learn more: https://crontab.guru/
+  # new time of 2:52pm NYC time (1840 UTC) - 1440 + 4h offset
+  # - cron: "52 18 * * *"
+  # test time of 130am NYC time (530 UTC) - 0130 + 4h offest
+  # - cron: "30 5 * * *"
+
+  # test time of 640am NYC time (1040 UTC) - 0640 + 4h offest
+  # - cron: "40 10 * * *"
+  # test time of 310am NYC time (0710 UTC) - 0310 + 4h offest
+  # - cron: "10 7 * * 4"
+  # - cron: "0 0 * * 0"  # Runs every Sunday at midnight UTC # Google Search (can you make a yaml file run a job monthly?)
+jobs:
+  run_etl:
+    runs-on: ubuntu-latest # Use a fresh Ubuntu runner for each job
+
+    # Set environment variables from GitHub Secrets
+    env:
+      NEON_DB_HOST: ${{ secrets.NEON_DB_HOST }}
+      NEON_DB_NAME: ${{ secrets.NEON_DB_NAME }}
+      NEON_DB_USER: ${{ secrets.NEON_DB_USER }}
+      NEON_DB_PASSWORD: ${{ secrets.NEON_DB_PASSWORD }}
+      NEON_DB_PORT: ${{ secrets.NEON_DB_PORT }}
+      REVERSE_GEOCACHE_API_BASE: ${{ secrets.REVERSE_GEOCACHE_API_BASE  }}
+      REVERSE_GEOCACHE_API_KEY: ${{ secrets.REVERSE_GEOCACHE_API_KEY  }}
+      GOOGLE_VM_DOCKER_HOSTED_SQL: ${{ secrets.GOOGLE_VM_DOCKER_HOSTED_SQL }}
+      DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL_ALT: ${{ secrets.DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL_ALT }}
+      DIG_OCEAN_DROPLET_DOCKER_PSQL: ${{ secrets.DIG_OCEAN_DROPLET_DOCKER_PSQL }}
+      IBM_DOCKER_PSQL_MONARCH: ${{ secrets.IBM_DOCKER_PSQL_MONARCH }}
+      XATA_DB_MONARCH: ${{ secrets.XATA_DB_MONARCH }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4 # Action to check out your repository code
+
+      - name: Set up Python
+        uses: actions/setup-python@v5 # Action to set up Python environment
+        with:
+          python-version: "3.9" # Specify your Python version (e.g., 3.8, 3.9, 3.10)
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Clean up old log file
+        run: rm -f etl_output.log # Deletes the log file if it exists
+
+      - name: Run ETL Script
+        id: run_script
+        # run: python etl_past_day_script.py 2>&1 | tee etl_output.log
+        run: python etl_script.py 2>&1 | tee etl_output.log
+
+      # CHQ: step added by Gemini AI
+      # New Step to catch the specific date error
+      - name: Validate Date Conversion Error
+        run: |
+          if grep -q "AttributeError: 'No data' has no attribute 'dt'" etl_output.log; then
+            echo "::error::ETL run failed: A date conversion error was detected."
+            exit 1 # Exit with a non-zero status to fail the job
+          else
+            echo "Date conversion check passed. No 'dt' accessor error found."
+          fi
+
+      # CHQ: Step added by me
+      # New Step to catch the specific date error
+      - name: Validate Incompatible Data types with Date Error
+        run: |
+          if grep -q "ValueError: cannot convert NA to integer" etl_output.log; then
+            echo "::error::ETL run failed: A incompatible data type with date error was detected."
+            exit 1 # Exit with a non-zero status to fail the job
+          else
+            echo "Date data types check passed."
+          fi
+
+      # CHQ: Step added by me
+      # New Step to catch the specific date error
+      - name: Validate Incompatible Data types with Date Error
+        run: |
+          if grep -q "OverflowError: Python integer -1 out of bounds for uint32" etl_output.log; then
+            echo "::error::ETL run failed: out of bounds error."
+            exit 1 # Exit with a non-zero status to fail the job
+          else
+            echo "All numbers in bounds."
+          fi
+
+      # The validation step is correctly placed here, after the script has run
+      - name: Validate Load Step Dependencies
+        run: |
+          if grep -q "AttributeError: module 'pandas.api.types' has no attribute 'StringDtype'" etl_output.log; then
+            echo "::error::ETL load step failed due to a dependency error."
+            exit 1
+          else
+            echo "Load step dependency check passed. No 'StringDtype' error found."
+          fi
+
+        # CHQ: step added by Gemini AI
+      - name: Validate Batch Coordinates Type
+        run: |
+          if grep -q "::error::The output of 'produce_batch_coordinates' is not a list." etl_output.log; then
+            echo "Type validation failed. The 'produce_batch_coordinates' function returned an invalid type."
+            exit 1
+          else
+            echo "Type validation passed. The 'produce_batch_coordinates' function returned a list."
+          fi
+
+      - name: Validate Fetch City And County
+        run: |
+          if grep -q "::error::ERROR - An unexpected error occurred during batch AI endpoint call" etl_output.log; then
+            echo "Data was not fetched."
+            exit 1 # Exit with a non-zero status to mark the job as failed
+          else
+            echo "Data fetched."
+          fi
+
+        # CHQ: step added by Gemini AI
+      - name: Validate API Response Structure
+        run: |
+          if grep -q "ERROR - An unexpected error occurred during batch AI endpoint call  : 'dict' object has no attribute 'features'" etl_output.log; then
+            echo "::error::ETL run failed: The API response was a dictionary, but it did not have the expected 'features' key."
+            exit 1
+          else
+            echo "API response structure validation passed. The 'features' key was found as expected."
+          fi
+
+      # CHQ: step added by Gemini AI (corrected position)
+      # - name: Validate Load Step Dependencies
+      #   run: |
+      #     if grep -q "AttributeError: module 'pandas.api.types' has no attribute 'StringDtype'" etl_output.log; then
+      #       echo "::error::ETL load step failed due to a dependency error."
+      #       exit 1 # Exit with a non-zero status to mark the job as failed
+      #     else
+      #       echo "Load step dependency check passed. No 'StringDtype' error found."
+      #     fi
+
+      # CHQ: step added by Gemini AI
+      - name: Check ETL Results for Data Loading Success
+        run: |
+          if grep -q "No data to load as DataFrame is empty" etl_output.log; then
+            echo "::error::ETL run considered a failure: No data was loaded into the database."
+            exit 1 # Exit with a non-zero status to mark the job as failed
+          else
+            echo "ETL run completed with data loaded (or no 'no data' warning found)."
+          fi
+
+      - name: Check ETL Results for properly loaded records from API endpoint
+        run: |
+          if grep "Error for record at original index" etl_output.log; then
+            echo "::error::ETL run considered a failure: Error for a record."
+            exit 1 # Exit with a non-zero status to mark the job as failed
+          else
+            echo "ETL run completed with records loaded (or no 'no data' warning found)."
+          fi
+
+      - name: Check Database connection string to ensure it is correct
+        run: |
+          if grep "FATAL ERROR: DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL_ALT environment variable is NOT SET." etl_output.log; then
+            echo "::error::ETL run considered a failure: Error for a record."
+            exit 1 # Exit with a non-zero status to mark the job as failed
+          else
+            echo "ETL run completed with successful loading into database."
+          fi
+      - name: Check for new data
+        # (Optional: for debugging)
+        # You could add steps here to verify data in Neon, e.g., using psql
+        # This step is just a placeholder to show where you might add checks.
+        run: |
+          echo "ETL script finished. Check Neon database for updated data."
