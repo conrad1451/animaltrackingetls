@@ -715,6 +715,7 @@ def monarch_etl_day_scan(year, month, day, conn_string):
     """
     Orchestrates the ETL process for Monarch Butterfly data for a given month and year.
     """
+    from datetime import datetime # Ensure datetime is imported for date_obj
 
     my_calendar = {
         1: "january", 2: "february", 3: "march", 4: "april", 5: "may", 6: "june",
@@ -739,22 +740,20 @@ def monarch_etl_day_scan(year, month, day, conn_string):
     if raw_data:
         logger.info("\n\n\n--- TRANSFORM STEP ---\n\n\n")
         transformed_df = transform_gbif_data(raw_data)
+        
+        # CHQ: Gemini AI corrected errors in passing arguments into load_data
         if not transformed_df.empty:
             logger.info("\n\n\n--- LOAD STEP ---\n\n\n")
-            # Corrected line: pass the variables directly to the table name string
 
-            table_name = ""
-
-            if(day < 10):
-                table_name = f"{my_calendar[month]}0{day}{year}" 
-            else:
-                table_name = f"{my_calendar[month]}{day}{year}" 
+            # Formatting table name (e.g., january012026)
+            day_str = f"0{day}" if day < 10 else str(day)
+            table_name = f"{my_calendar[month]}{day_str}{year}" 
                 
-            # 1. Load the actual data
-            load_data(conn_string, transformed_df, table_name)
+            # --- FIX: SWAPPED ARGUMENTS TO MATCH DEFINITION ---
+            # 1. Load the actual data (transformed_df MUST be first)
+            load_data(transformed_df, conn_string, table_name)
             
             # 2. Register the completion in the inventory table
-            from sqlalchemy import create_engine # Ensure engine is available
             engine = create_engine(conn_string)
             
             # Create a date object for the inventory
@@ -764,18 +763,12 @@ def monarch_etl_day_scan(year, month, day, conn_string):
             logger.info(f"Registering {date_obj} in data_inventory...")
             register_date_in_inventory(engine, date_obj, table_name, record_count)
             
-            # logger.info("\n\n\n--- LOAD STEP ---\n\n\n")
-            load_data(conn_string, transformed_df, table_name)
-            # load_data(conn_string, transformed_df, my_calendar[target_month] + " " + str(target_year))
-
-            
         else:
             logger.info("Transformed DataFrame is empty. No data to load.")
     else:
         logger.info("No raw data extracted. ETL process aborted.")
 
     logger.info("--- ETL process finished ---")
-
 def monarch_etl_multi_day_scan(year, month, day_start, day_end, conn_string):
     for chosen_day in range(day_start, day_end+1):
         monarch_etl_day_scan(year, month, chosen_day, conn_string) # For Jun 30 2025 # had 164 entries
