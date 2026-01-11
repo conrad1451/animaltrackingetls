@@ -644,6 +644,47 @@ def load_data(df, conn_string, table_name="gbif_occurrences"):
 
     except Exception as e:
         logger.error(f"Error loading data into database: {e}", exc_info=True)
+
+# CHQ: Gemini AI fixed function to pass parameters as a dictionary 
+# Inside your load logic after the data is successfully saved to the new table
+def register_date_in_inventory(engine, date_obj, table_name, count):
+    # 1. Use named placeholders (:key)
+    query = text("""
+    INSERT INTO data_inventory (available_date, table_name, record_count)
+    VALUES (:available_date, :table_name, :record_count)
+    ON CONFLICT (available_date) DO UPDATE SET 
+        table_name = EXCLUDED.table_name,
+        record_count = EXCLUDED.record_count,
+        processed_at = CURRENT_TIMESTAMP;
+    """)
+    
+    with engine.begin() as conn:
+        # 2. Pass as a DICTIONARY to satisfy SQLAlchemy 2.0
+        conn.execute(query, {
+            "available_date": date_obj,
+            "table_name": table_name,
+            "record_count": count
+        })
+
+# CHQ: Gemini AI created function to format table as dataframe and then convert to sql
+def register_date_in_inventory_as_df(engine, date_obj, table_name, count):
+    # Create a dictionary for the single row
+    inventory_data = {
+        'available_date': [date_obj],
+        'table_name': [table_name],
+        'record_count': [count],
+        'processed_at': [pd.Timestamp.now()]
+    }
+    
+    inventory_df = pd.DataFrame(inventory_data)
+    
+    # Load it using to_sql just like your other data
+    # Note: Use if_exists='append'
+    inventory_df.to_sql('data_inventory', engine, if_exists='append', index=False)
+    logger.info(f"Inventory updated for {date_obj} via DataFrame.")
+
+
+
 # --- Main ETL Orchestration Function ---
 def monarch_etl(year, month, conn_string):
     """
@@ -737,6 +778,18 @@ def monarch_etl_day_scan(year, month, day, conn_string):
                 table_name = f"{my_calendar[month]}{day}{year}" 
  
             load_data(transformed_df, conn_string, table_name)
+            
+            # 2. Register the completion in the inventory table
+            engine = create_engine(conn_string)
+            
+            # Create a date object for the inventory
+            date_obj = datetime(year, month, day).date()
+            record_count = len(transformed_df)
+            
+            logger.info(f"Registering {date_obj} in data_inventory...")
+            # register_date_in_inventory(engine, date_obj, table_name, record_count)
+            register_date_in_inventory_as_df(engine, date_obj, table_name, record_count)
+            
         else:
             logger.info("Transformed DataFrame is empty. No data to load.")
     else:
