@@ -15,7 +15,7 @@ import math
 
 import psycopg2
 # from sqlalchemy import create_engine, BigInteger
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 from sqlalchemy.types import BigInteger
 
 # from dataclasses import dataclass
@@ -687,6 +687,7 @@ def register_date_in_inventory_as_df(engine, date_obj, table_name, count):
     logger.info(f"Inventory updated for {date_obj} via DataFrame.")
 
 
+
 # --- Main ETL Orchestration Function ---
 def monarch_etl(year, month, conn_string):
     """
@@ -744,7 +745,6 @@ def monarch_etl_day_scan(year, month, day, conn_string):
     """
     Orchestrates the ETL process for Monarch Butterfly data for a given month and year.
     """
-    from datetime import datetime # Ensure datetime is imported for date_obj
 
     my_calendar = {
         1: "january", 2: "february", 3: "march", 4: "april", 5: "may", 6: "june",
@@ -769,17 +769,17 @@ def monarch_etl_day_scan(year, month, day, conn_string):
     if raw_data:
         logger.info("\n\n\n--- TRANSFORM STEP ---\n\n\n")
         transformed_df = transform_gbif_data(raw_data)
-        
-        # CHQ: Gemini AI corrected errors in passing arguments into load_data
         if not transformed_df.empty:
             logger.info("\n\n\n--- LOAD STEP ---\n\n\n")
+            # Corrected line: pass the variables directly to the table name string
 
-            # Formatting table name (e.g., january012026)
-            day_str = f"0{day}" if day < 10 else str(day)
-            table_name = f"{my_calendar[month]}{day_str}{year}" 
-                
-            # --- FIX: SWAPPED ARGUMENTS TO MATCH DEFINITION ---
-            # 1. Load the actual data (transformed_df MUST be first)
+            table_name = ""
+
+            if(day < 10):
+                table_name = f"{my_calendar[month]}0{day}{year}" 
+            else:
+                table_name = f"{my_calendar[month]}{day}{year}" 
+ 
             load_data(transformed_df, conn_string, table_name)
             
             # 2. Register the completion in the inventory table
@@ -799,6 +799,7 @@ def monarch_etl_day_scan(year, month, day, conn_string):
         logger.info("No raw data extracted. ETL process aborted.")
 
     logger.info("--- ETL process finished ---")
+
 def monarch_etl_multi_day_scan(year, month, day_start, day_end, conn_string):
     for chosen_day in range(day_start, day_end+1):
         monarch_etl_day_scan(year, month, chosen_day, conn_string) # For Jun 30 2025 # had 164 entries
