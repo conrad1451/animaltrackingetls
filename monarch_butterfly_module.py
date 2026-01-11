@@ -8,6 +8,8 @@ import json
 import pandas as pd
 from dateutil.parser import parse as parse_date
 from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
+from datetime import datetime  # <--- ADD THIS LINE
+
 # import calendar
 import math
 
@@ -292,7 +294,8 @@ def extract_gbif_data(
 def clean_data(df):
 
     # 1. Robust Date Parsing for 'eventDate'
-    df['eventDateParsed'] = pd.NaT
+    # df['eventDateParsed'] = pd.NaT
+    df['eventDateParsed'] = pd.Series(pd.NaT, dtype='datetime64[ns]')
     for index, row in df.iterrows():
         date_str = row.get('eventDate')
         if date_str:
