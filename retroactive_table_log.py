@@ -6,7 +6,7 @@ from datetime import datetime, date  # FIXED: Added date
 from sqlalchemy import create_engine, text  # FIXED: Added text
 
 # Setup logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # CHQ: Gemini AI fixed function to pass parameters as a dictionary 
@@ -50,6 +50,10 @@ def register_date_in_inventory_as_df(engine, date_obj, table_name, count):
 
 
 def backfill_december_inventory(conn_string):
+    if not conn_string:
+        logger.error("Connection string is empty!")
+        return
+
     engine = create_engine(conn_string)
     year = 2021
     month = 12
