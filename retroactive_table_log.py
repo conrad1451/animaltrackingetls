@@ -1,23 +1,9 @@
 # retroactive_table_log.py
-
 import os
-import time
 import logging
-import requests
-import json
 import pandas as pd
-from dateutil.parser import parse as parse_date
-from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
-from datetime import datetime  # <--- ADD THIS LINE
-
-# import calendar
-import math
-
-import psycopg2
-# from sqlalchemy import create_engine, BigInteger
-from sqlalchemy import create_engine
-from sqlalchemy.types import BigInteger
-
+from datetime import datetime, date  # FIXED: Added date
+from sqlalchemy import create_engine, text  # FIXED: Added text
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
