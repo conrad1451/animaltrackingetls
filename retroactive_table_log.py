@@ -70,14 +70,15 @@ def backfill_december_inventory(conn_string):
                 check_query = text("""
                     SELECT EXISTS (
                         SELECT FROM information_schema.tables 
-                        WHERE table_name = :t_name
+                        WHERE table_schema = 'public' 
+                        AND table_name = :t_name
                     );
                 """)
                 exists = conn.execute(check_query, {"t_name": table_name}).scalar()
                 
                 if exists:
                     # 2. Get the row count
-                    count_query = text(f"SELECT count(*) FROM {table_name}")
+                    count_query = text(f'SELECT count(*) FROM "{table_name}"')
                     count = conn.execute(count_query).scalar()
                     
                     # 3. Use your existing function to log it
@@ -90,6 +91,10 @@ def backfill_december_inventory(conn_string):
             logger.error(f"Failed to backfill {table_name}: {e}")
 
 if __name__ == "__main__":
-    # Use your existing connection string
-    MY_CONN_STRING = "your_connection_string_here"
-    backfill_december_inventory(MY_CONN_STRING)
+    # conn_string = os.getenv('XATA_DB_MONARCH') or os.getenv('DATABASE_URL')
+    conn_string = os.getenv('XATA_DB_MONARCH')
+    
+    if conn_string:
+        backfill_december_inventory(conn_string)
+    else:
+        logger.error("No connection string found in environment variables.")
