@@ -1,26 +1,12 @@
 # retroactive_table_log.py
-
 import os
-import time
 import logging
-import requests
-import json
 import pandas as pd
-from dateutil.parser import parse as parse_date
-from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
-from datetime import datetime  # <--- ADD THIS LINE
-
-# import calendar
-import math
-
-import psycopg2
-# from sqlalchemy import create_engine, BigInteger
-from sqlalchemy import create_engine
-from sqlalchemy.types import BigInteger
-
+from datetime import datetime, date  # FIXED: Added date
+from sqlalchemy import create_engine, text  # FIXED: Added text
 
 # Setup logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # CHQ: Gemini AI fixed function to pass parameters as a dictionary 
@@ -64,6 +50,10 @@ def register_date_in_inventory_as_df(engine, date_obj, table_name, count):
 
 
 def backfill_december_inventory(conn_string):
+    if not conn_string:
+        logger.error("Connection string is empty!")
+        return
+
     engine = create_engine(conn_string)
     year = 2021
     month = 12
@@ -80,14 +70,15 @@ def backfill_december_inventory(conn_string):
                 check_query = text("""
                     SELECT EXISTS (
                         SELECT FROM information_schema.tables 
-                        WHERE table_name = :t_name
+                        WHERE table_schema = 'public' 
+                        AND table_name = :t_name
                     );
                 """)
                 exists = conn.execute(check_query, {"t_name": table_name}).scalar()
                 
                 if exists:
                     # 2. Get the row count
-                    count_query = text(f"SELECT count(*) FROM {table_name}")
+                    count_query = text(f'SELECT count(*) FROM "{table_name}"')
                     count = conn.execute(count_query).scalar()
                     
                     # 3. Use your existing function to log it
@@ -100,6 +91,10 @@ def backfill_december_inventory(conn_string):
             logger.error(f"Failed to backfill {table_name}: {e}")
 
 if __name__ == "__main__":
-    # Use your existing connection string
-    MY_CONN_STRING = "your_connection_string_here"
-    backfill_december_inventory(MY_CONN_STRING)
+    # conn_string = os.getenv('XATA_DB_MONARCH') or os.getenv('DATABASE_URL')
+    conn_string = os.getenv('XATA_DB_MONARCH')
+    
+    if conn_string:
+        backfill_december_inventory(conn_string)
+    else:
+        logger.error("No connection string found in environment variables.")
