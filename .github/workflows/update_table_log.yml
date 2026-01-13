@@ -25,7 +25,7 @@ on:
   # - cron: "10 7 * * 4"
   # - cron: "0 0 * * 0"  # Runs every Sunday at midnight UTC # Google Search (can you make a yaml file run a job monthly?)
 jobs:
-  run_etl:
+  log_existing_tables:
     runs-on: ubuntu-latest # Use a fresh Ubuntu runner for each job
 
     # Set environment variables from GitHub Secrets
