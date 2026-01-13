@@ -30,43 +30,53 @@ def register_date_in_inventory(engine, date_obj, table_name, count):
             "record_count": count
         })
 
-# CHQ: Gemini AI created function to format table as dataframe and then convert to sql
-def register_date_in_inventory_as_df(engine, date_obj, table_name, count):
-    # Create a dictionary for the single row
-    inventory_data = {
-        'available_date': [date_obj],
-        'table_name': [table_name],
-        'record_count': [count],
-        'processed_at': [pd.Timestamp.now()]
-    }
-    
-    inventory_df = pd.DataFrame(inventory_data)
-    
-    # Load it using to_sql just like your other data
-    # Note: Use if_exists='append'
-    inventory_df.to_sql('data_inventory', engine, if_exists='append', index=False)
-    logger.info(f"Inventory updated for {date_obj} via DataFrame.")
-
-
-
-def backfill_december_inventory(conn_string):
+def backfill_inventory(conn_string: str, month: int, year: int):
     if not conn_string:
         logger.error("Connection string is empty!")
         return
 
+    my_calendar ={
+        1: "january",
+        2: "february",
+        3: "march",
+        4: "april",
+        5: "may",
+        6: "june",
+        7: "july",
+        8: "august",
+        9: "september",
+        10: "october",
+        11: "november",
+        12: "december",
+    }
+
+    days_in_months ={
+        1: 31,
+        2: 29 if (year % 4 == 0) else 28,
+        3: 31,
+        4: 30,
+        5: 31,
+        6: 30,
+        7: 31,
+        8: 31,
+        9: 30,
+        10: 31,
+        11: 30,
+        12: 31,
+    }
+
     engine = create_engine(conn_string)
-    year = 2021
-    month = 12
+    # year = 2021
+    # month = 12
     
-    # Loop through all possible days in December
-    for day in range(1, 32):
+    for day in range(1, (days_in_months+1)):
         day_str = f"0{day}" if day < 10 else str(day)
-        table_name = f"december{day_str}{year}"
-        date_obj = date(year, month, day)
+        table_name = f"{my_calendar[month]}{day_str}{year}"
+        date_obj = date(year, month, day) # Works now because of import
         
         try:
             with engine.connect() as conn:
-                # 1. Check if the table actually exists in the database
+                # 1. Check if table exists
                 check_query = text("""
                     SELECT EXISTS (
                         SELECT FROM information_schema.tables 
@@ -81,7 +91,7 @@ def backfill_december_inventory(conn_string):
                     count_query = text(f'SELECT count(*) FROM "{table_name}"')
                     count = conn.execute(count_query).scalar()
                     
-                    # 3. Use your existing function to log it
+                    # 3. Log it
                     register_date_in_inventory(engine, date_obj, table_name, count)
                     logger.info(f"Successfully backfilled: {table_name} ({count} records)")
                 else:
@@ -89,12 +99,12 @@ def backfill_december_inventory(conn_string):
                     
         except Exception as e:
             logger.error(f"Failed to backfill {table_name}: {e}")
-
-if __name__ == "__main__":
+ 
+def monarch_etl_table_backfill(year, month, conn_string):
     # conn_string = os.getenv('XATA_DB_MONARCH') or os.getenv('DATABASE_URL')
-    conn_string = os.getenv('XATA_DB_MONARCH')
+    # conn_string = os.getenv('XATA_DB_MONARCH')
     
     if conn_string:
-        backfill_december_inventory(conn_string)
+        backfill_inventory(conn_string, month, year)
     else:
         logger.error("No connection string found in environment variables.")
