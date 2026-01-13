@@ -59,4 +59,4 @@ jobs:
 
       - name: Run Table Logging Script
         id: run_table_log_script
-        run: python retroactive_table_log.py 2>&1 | tee etl_output.log
+        run: python table_tracking.py 2>&1 | tee etl_output.log
