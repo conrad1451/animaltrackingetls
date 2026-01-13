@@ -69,7 +69,7 @@ def backfill_inventory(conn_string: str, month: int, year: int):
     # year = 2021
     # month = 12
     
-    for day in range(1, (days_in_months+1)):
+    for day in range(1, (days_in_months[month]+1)):
         day_str = f"0{day}" if day < 10 else str(day)
         table_name = f"{my_calendar[month]}{day_str}{year}"
         date_obj = date(year, month, day) # Works now because of import
