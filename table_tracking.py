@@ -74,4 +74,4 @@ if __name__ == '__main__':
     # This will attempt to run for the next month
     # monarch_etl(target_year, target_month)
 
-    retroactive_table_log.monarch_etl_table_backfill(2021, 12, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2021, 12, conn_string)
