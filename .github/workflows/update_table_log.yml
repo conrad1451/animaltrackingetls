@@ -57,7 +57,6 @@ jobs:
       - name: Clean up old log file
         run: rm -f etl_output.log # Deletes the log file if it exists
 
-      - name: Run ETL Script
-        id: run_script
-        # run: python etl_past_day_script.py 2>&1 | tee etl_output.log
-        run: python etl_script.py 2>&1 | tee etl_output.log
+      - name: Run Table Logging Script
+        id: run_table_log_script
+        run: python retroactive_table_log.py 2>&1 | tee etl_output.log
