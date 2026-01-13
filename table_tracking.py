@@ -1,6 +1,6 @@
-# etl_script.py
+# table_tracking.py
 
-import monarch_butterfly_module
+import retroactive_table_log
 import os
 
 from datetime import datetime, timedelta
@@ -74,6 +74,4 @@ if __name__ == '__main__':
     # This will attempt to run for the next month
     # monarch_etl(target_year, target_month)
 
-
-
-    monarch_butterfly_module.monarch_etl_multi_day_scan(2021, 11, 1, 30, conn_string)
+    retroactive_table_log.monarch_etl_table_backfill(2021, 12, conn_string)
