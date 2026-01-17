@@ -75,6 +75,7 @@ if __name__ == '__main__':
     # monarch_etl(target_year, target_month)
 
     # retroactive_table_log.monarch_etl_table_backfill(2021, 12, conn_string)
+
     # retroactive_table_log.monarch_etl_table_backfill(2022, 1, conn_string)
     # retroactive_table_log.monarch_etl_table_backfill(2022, 2, conn_string)
     # retroactive_table_log.monarch_etl_table_backfill(2022, 3, conn_string)
@@ -86,4 +87,14 @@ if __name__ == '__main__':
     # retroactive_table_log.monarch_etl_table_backfill(2022, 9, conn_string)
     # retroactive_table_log.monarch_etl_table_backfill(2022, 10, conn_string)
     # retroactive_table_log.monarch_etl_table_backfill(2022, 11, conn_string)
-    retroactive_table_log.monarch_etl_table_backfill(2022, 12, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2022, 12, conn_string)
+
+    retroactive_table_log.monarch_etl_table_backfill(2023, 1, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2023, 2, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2023, 3, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2023, 4, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2023, 5, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2023, 6, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2023, 7, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2023, 8, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2023, 9, conn_string)
