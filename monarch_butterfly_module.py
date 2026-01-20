@@ -593,7 +593,7 @@ def transform_gbif_data(raw_data):
     return final_df
 
 # CHQ: Gemini AI modified to clear existing date entry
-def register_date_in_inventory_as_df(engine, date_obj, table_name, count, df): # Added df as arg
+def register_date_in_inventory_as_df(engine, date_obj, table_name, count):
     clean_date = pd.to_datetime(date_obj).date()
 
     delete_query = text("DELETE FROM data_inventory WHERE available_date = :date_val")
