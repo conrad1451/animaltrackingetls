@@ -15,7 +15,7 @@ import math
 
 import psycopg2
 # from sqlalchemy import create_engine, BigInteger
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.types import BigInteger
 
 # from dataclasses import dataclass
@@ -669,24 +669,33 @@ def register_date_in_inventory(engine, date_obj, table_name, count):
             "record_count": count
         })
 
-# CHQ: Gemini AI created function to format table as dataframe and then convert to sql
+# CHQ: Gemini AI modified to clear existing date entry before appending to prevent UniqueViolation
 def register_date_in_inventory_as_df(engine, date_obj, table_name, count):
-    # Create a dictionary for the single row
+    # 1. Ensure date_obj is a clean date (removes any time component)
+    # This prevents '2021-12-01 10:00:00' from causing issues in a DATE column
+    clean_date = pd.to_datetime(date_obj).date()
+
+    # 2. Clear existing record for this specific date
+    delete_query = text("DELETE FROM data_inventory WHERE available_date = :date_val")
+    
+    with engine.connect() as conn:
+        conn.execute(delete_query, {"date_val": clean_date})
+        conn.commit()
+        logger.info(f"Cleared existing inventory record for {clean_date}.")
+
+    # 3. Create dictionary with explicit types
     inventory_data = {
-        'available_date': [date_obj],
+        'available_date': [clean_date], # Use the clean date object
         'table_name': [table_name],
-        'record_count': [count],
+        'record_count': [int(count)],    # Ensure count is a standard integer
         'processed_at': [pd.Timestamp.now()]
     }
     
     inventory_df = pd.DataFrame(inventory_data)
     
-    # Load it using to_sql just like your other data
-    # Note: Use if_exists='append'
+    # 4. Final Load
     inventory_df.to_sql('data_inventory', engine, if_exists='append', index=False)
-    logger.info(f"Inventory updated for {date_obj} via DataFrame.")
-
-
+    logger.info(f"Inventory successfully updated for {clean_date}.")
 
 # --- Main ETL Orchestration Function ---
 def monarch_etl(year, month, conn_string):
