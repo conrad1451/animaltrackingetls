@@ -555,7 +555,21 @@ def attach_city_county_info(the_df):
 
     return df_final
 
-# --- Transformation Function ---
+def ensure_schema_consistency(df):
+    expected_cols = [
+        "gbifID", "datasetKey", "publishingOrgKey", "eventDate", "eventDateParsed", 
+        "year", "month", "day", "day_of_week", "week_of_year", "date_only", 
+        "scientificName", "vernacularName", "taxonKey", "kingdom", "phylum", 
+        "class", "order", "family", "genus", "species", "decimalLatitude", 
+        "decimalLongitude", "coordinateUncertaintyInMeters", "countryCode", 
+        "stateProvince", "individualCount", "basisOfRecord", "recordedBy", 
+        "occurrenceID", "collectionCode", "catalogNumber", "county", "cityOrTown", "time_only"
+    ]
+    for col in expected_cols:
+        if col not in df.columns:
+            df[col] = None # Adds the column as NULL if missing
+    return df[expected_cols] # Ensures column order is also consistent
+
 def transform_gbif_data(raw_data):
     """
     Transforms raw GBIF occurrence data into a cleaned and enriched Pandas DataFrame.
@@ -567,18 +581,37 @@ def transform_gbif_data(raw_data):
     logger.info(f"Starting transformation of {len(raw_data)} records.")
 
     df = pd.DataFrame(raw_data)
-
     df_transformed = clean_data(df)
-
     next_to_final_df = attach_city_county_info(df_transformed)
-
     final_df = attach_time_discovered_info(next_to_final_df)
 
-    logger.info(f"Finished enriching location data with reverse geocaching.")
+    # CRITICAL FIX: Call schema enforcement HERE before returning
+    # This ensures the daily sightings table (e.g. december082021) has all columns
+    final_df = ensure_schema_consistency(final_df)
 
     logger.info(f"Finished transformation. Transformed records: {len(final_df)}.")
     return final_df
- 
+
+# CHQ: Gemini AI modified to clear existing date entry
+def register_date_in_inventory_as_df(engine, date_obj, table_name, count, df): # Added df as arg
+    clean_date = pd.to_datetime(date_obj).date()
+
+    delete_query = text("DELETE FROM data_inventory WHERE available_date = :date_val")
+     
+    with engine.connect() as conn:
+        conn.execute(delete_query, {"date_val": clean_date})
+        conn.commit()
+        logger.info(f"Cleared existing inventory record for {clean_date}.")
+
+    inventory_data = {
+        'available_date': [clean_date],
+        'table_name': [table_name],
+        'record_count': [int(count)],
+        'processed_at': [pd.Timestamp.now()]
+    }
+    
+    inventory_df = pd.DataFrame(inventory_data)
+    inventory_df.to_sql('data_inventory', engine, if_exists='append', index=False)
 # --- Load Function (Placeholder for Database Interaction) ---
 def load_data(df, conn_string, table_name="gbif_occurrences"):
     """
@@ -668,35 +701,7 @@ def register_date_in_inventory(engine, date_obj, table_name, count):
             "table_name": table_name,
             "record_count": count
         })
-
-# CHQ: Gemini AI modified to clear existing date entry before appending to prevent UniqueViolation
-def register_date_in_inventory_as_df(engine, date_obj, table_name, count):
-    # 1. Ensure date_obj is a clean date (removes any time component)
-    # This prevents '2021-12-01 10:00:00' from causing issues in a DATE column
-    clean_date = pd.to_datetime(date_obj).date()
-
-    # 2. Clear existing record for this specific date
-    delete_query = text("DELETE FROM data_inventory WHERE available_date = :date_val")
-    
-    with engine.connect() as conn:
-        conn.execute(delete_query, {"date_val": clean_date})
-        conn.commit()
-        logger.info(f"Cleared existing inventory record for {clean_date}.")
-
-    # 3. Create dictionary with explicit types
-    inventory_data = {
-        'available_date': [clean_date], # Use the clean date object
-        'table_name': [table_name],
-        'record_count': [int(count)],    # Ensure count is a standard integer
-        'processed_at': [pd.Timestamp.now()]
-    }
-    
-    inventory_df = pd.DataFrame(inventory_data)
-    
-    # 4. Final Load
-    inventory_df.to_sql('data_inventory', engine, if_exists='append', index=False)
-    logger.info(f"Inventory successfully updated for {clean_date}.")
-
+ 
 # --- Main ETL Orchestration Function ---
 def monarch_etl(year, month, conn_string):
     """
