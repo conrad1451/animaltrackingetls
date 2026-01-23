@@ -649,7 +649,7 @@ def load_data(df, conn_string, table_name="gbif_occurrences"):
         }
 
         # The to_sql call now includes the dtype mapping
-        df.to_sql(table_name, engine, if_exists='append', index=False, dtype=dtype_mapping)
+        df.to_sql(table_name, engine, if_exists='replace', index=False, dtype=dtype_mapping)
         logger.info(f"Successfully loaded {len(df)} records into '{table_name}'.")
 
     except Exception as e:
