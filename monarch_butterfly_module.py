@@ -295,13 +295,22 @@ def extract_gbif_data(
 # time and date fields to be filled with null
 def clean_data(df):
     # 1. Initialize the column as a datetime type that can handle timezones
+    # This prevents the "incompatible dtype" FutureWarning and ensures dates are parsed
     df['eventDateParsed'] = pd.to_datetime(df['eventDate'], errors='coerce', utc=True)
     
     # 2. Drop records that absolutely cannot be parsed
     df.dropna(subset=['eventDateParsed'], inplace=True)
-    
-    # 3. Handle 'individualCount' and other numeric fields...
-    # (Existing logic for individualCount)
+    logger.info(f"After date parsing: {len(df)} records.")
+
+    # 3. Handle coordinates and individualCount
+    df['decimalLatitude'] = pd.to_numeric(df['decimalLatitude'], errors='coerce')
+    df['decimalLongitude'] = pd.to_numeric(df['decimalLongitude'], errors='coerce')
+    df.dropna(subset=['decimalLatitude', 'decimalLongitude'], inplace=True)
+
+    if 'individualCount' not in df.columns:
+        df['individualCount'] = 1
+    else:
+        df['individualCount'] = pd.to_numeric(df['individualCount'], errors='coerce').fillna(1).astype(int)
 
     # 4. Derive the sub-columns from the successfully parsed dates
     if not df['eventDateParsed'].empty:
@@ -311,9 +320,27 @@ def clean_data(df):
         df['day_of_week'] = df['eventDateParsed'].dt.dayofweek
         df['week_of_year'] = df['eventDateParsed'].dt.isocalendar().week.astype(int)
         df['date_only'] = df['eventDateParsed'].dt.date
-        df['time_only'] = df['eventDateParsed'].dt.time # Ensure this is captured here
+        # Crucial for your frontend display
+        df['time_only'] = df['eventDateParsed'].dt.time
     
-    # ... rest of your transformation logic
+    # Define columns to keep before schema enforcement
+    final_columns = [
+        'gbifID', 'datasetKey', 'publishingOrgKey', 'eventDate', 'eventDateParsed', 
+        'year', 'month', 'day', 'day_of_week', 'week_of_year', 'date_only', 
+        'scientificName', 'vernacularName', 'taxonKey', 'kingdom', 'phylum', 
+        'class', 'order', 'family', 'genus', 'species', 'decimalLatitude', 
+        'decimalLongitude', 'coordinateUncertaintyInMeters', 'countryCode', 
+        'stateProvince', 'individualCount', 'basisOfRecord', 'recordedBy', 
+        'occurrenceID', 'collectionCode', 'catalogNumber', 'county', 'cityOrTown', 'time_only'
+    ]
+
+    # Select existing columns and cast gbifID to string
+    df_transformed = df[[col for col in final_columns if col in df.columns]].copy()
+    if 'gbifID' in df_transformed.columns:
+        df_transformed['gbifID'] = df_transformed['gbifID'].astype(str)
+
+    return df_transformed
+
 def produce_batch_coordinates(the_batch_payload, the_batch_size, the_selected_batch_payload_size):
     of_minutes = 60
 
