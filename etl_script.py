@@ -74,7 +74,23 @@ if __name__ == '__main__':
     # This will attempt to run for the next month
     # monarch_etl(target_year, target_month)
 
-    monarch_butterfly_module.monarch_etl_multi_day_scan(2021, 1, 1, 31, conn_string)
+
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2020, 1, 1, 31, conn_string)
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2020, 2, 1, 29, conn_string)
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2020, 3, 1, 31, conn_string)
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2020, 4, 1, 30, conn_string)
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2020, 5, 1, 31, conn_string)
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2020, 6, 1, 30, conn_string)
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2020, 7, 1, 31, conn_string)
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2020, 8, 1, 31, conn_string)
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2020, 9, 1, 30, conn_string)
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2020, 10, 1, 31, conn_string)
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2020, 11, 1, 30, conn_string)
+    monarch_butterfly_module.monarch_etl_multi_day_scan(2020, 12, 1, 31, conn_string)
+    
+    ###############################################################################################
+
+    # monarch_butterfly_module.monarch_etl_multi_day_scan(2021, 1, 1, 31, conn_string)
     # monarch_butterfly_module.monarch_etl_multi_day_scan(2021, 2, 1, 28, conn_string)
     # monarch_butterfly_module.monarch_etl_multi_day_scan(2021, 3, 1, 31, conn_string)
     # monarch_butterfly_module.monarch_etl_multi_day_scan(2021, 4, 1, 30, conn_string)
