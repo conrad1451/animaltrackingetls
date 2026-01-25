@@ -172,6 +172,10 @@ if __name__ == '__main__':
     # monarch_butterfly_module.monarch_etl_multi_day_scan(2024, 12, 1, 31, conn_string)
 
 ###############################################################################################3
+    
+    monarch_butterfly_module.monarch_etl_day_scan(2021, 6, 30, conn_string)
+
+###############################################################################################3
 
     # monarch_butterfly_module.monarch_etl_multi_day_scan(2025, 1, 1, 31, conn_string)
     # monarch_butterfly_module.monarch_etl_multi_day_scan(2025, 2, 1, 29, conn_string)
