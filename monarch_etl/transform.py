@@ -16,10 +16,10 @@ Depends on: cleaning, enrichment, schema, logger.
 
 import pandas as pd
 
-from cleaning import clean_raw_dataframe
-from enrichment import attach_geocoding, attach_time_only
-from logger import logger
-from schema import enforce_schema
+from .cleaning import clean_raw_dataframe
+from .enrichment import attach_geocoding, attach_time_only
+from .logger import logger
+from .schema import enforce_schema
 
 
 def transform_gbif_data(raw_data: list[dict]) -> pd.DataFrame:
