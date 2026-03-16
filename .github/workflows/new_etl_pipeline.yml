@@ -37,6 +37,10 @@ jobs:
       NEON_DB_USER: ${{ secrets.NEON_DB_USER }}
       NEON_DB_PASSWORD: ${{ secrets.NEON_DB_PASSWORD }}
       NEON_DB_PORT: ${{ secrets.NEON_DB_PORT }}
+      NEON_DB_MONARCH: ${{ secrets.NEON_DB_MONARCH }}
+
+      AIVEN_DB_MONARCH: ${{ secrets.AIVEN_DB_MONARCH }}
+
       REVERSE_GEOCACHE_API_BASE: ${{ secrets.REVERSE_GEOCACHE_API_BASE  }}
       REVERSE_GEOCACHE_API_KEY: ${{ secrets.REVERSE_GEOCACHE_API_KEY  }}
       GOOGLE_VM_DOCKER_HOSTED_SQL: ${{ secrets.GOOGLE_VM_DOCKER_HOSTED_SQL }}
