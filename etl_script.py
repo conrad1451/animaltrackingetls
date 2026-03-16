@@ -12,6 +12,10 @@ if not AIVEN_DB_MONARCH:
 
 conn_string = AIVEN_DB_MONARCH
 
+# SQLAlchemy 2.0 requires 'postgresql://' not 'postgres://'
+if conn_string.startswith("postgres://"):
+    conn_string = conn_string.replace("postgres://", "postgresql://", 1)
+
 if __name__ == '__main__':
 
     # monarch_etl_multi_day_scan(2020, 1, 1, 31, conn_string)
