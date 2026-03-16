@@ -18,7 +18,7 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 from datetime import date as date_type
 
-from logger import logger
+from .logger import logger
 
 
 # ---------------------------------------------------------------------------

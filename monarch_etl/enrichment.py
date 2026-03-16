@@ -17,8 +17,8 @@ Does NOT touch GBIF extraction, cleaning, or the database.
 import requests
 import pandas as pd
 
-from geocode_client import fetch_location_for_coordinates, parse_county_and_city
-from logger import logger
+from .geocode_client import fetch_location_for_coordinates, parse_county_and_city
+from .logger import logger
 
 
 # ---------------------------------------------------------------------------

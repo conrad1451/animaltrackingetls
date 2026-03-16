@@ -17,12 +17,12 @@ All three follow the same Extract → Transform → Load → Register pattern.
 
 from datetime import datetime
 
-from db_loader import load_dataframe
-from gbif_client import extract_gbif_data
-from inventory import register_date_via_dataframe
-from logger import logger
-from table_naming import table_name_for_day, table_name_for_month
-from transform import transform_gbif_data
+from .db_loader import load_dataframe
+from .gbif_client import extract_gbif_data
+from .inventory import register_date_via_dataframe
+from .logger import logger
+from .table_naming import table_name_for_day, table_name_for_month
+from .transform import transform_gbif_data
 
 
 # ---------------------------------------------------------------------------

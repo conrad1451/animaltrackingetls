@@ -15,9 +15,9 @@ Does NOT touch pandas, SQLAlchemy, or GBIF.
 
 import requests
 
-from config import REVERSE_GEOCACHE_API_BASE, REVERSE_GEOCACHE_API_KEY
-from logger import logger
-from retry_config import http_retry
+from .config import REVERSE_GEOCACHE_API_BASE, REVERSE_GEOCACHE_API_KEY
+from .logger import logger
+from .retry_config import http_retry
 
 
 # ---------------------------------------------------------------------------

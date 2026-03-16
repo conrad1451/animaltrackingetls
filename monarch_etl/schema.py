@@ -18,7 +18,7 @@ Depends on: config.
 import pandas as pd
 from sqlalchemy.types import BigInteger, Date, DateTime, Float, Integer, String
 
-from config import FINAL_COLUMNS
+from .config import FINAL_COLUMNS
 
 
 # ---------------------------------------------------------------------------

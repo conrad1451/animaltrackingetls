@@ -17,9 +17,9 @@ import time
 
 import requests
 
-from config import DEFAULT_TAXON_KEY, GBIF_BASE_URL
-from logger import logger
-from retry_config import http_retry
+from .config import DEFAULT_TAXON_KEY, GBIF_BASE_URL
+from .logger import logger
+from .retry_config import http_retry
 
 
 # ---------------------------------------------------------------------------

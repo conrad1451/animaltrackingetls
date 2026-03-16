@@ -16,8 +16,8 @@ Does NOT transform data or manage the data-inventory table.
 import pandas as pd
 from sqlalchemy import create_engine
 
-from logger import logger
-from schema import SQLALCHEMY_DTYPE_MAP
+from .logger import logger
+from .schema import SQLALCHEMY_DTYPE_MAP
 
 
 def load_dataframe(df: pd.DataFrame, conn_string: str, table_name: str) -> None:

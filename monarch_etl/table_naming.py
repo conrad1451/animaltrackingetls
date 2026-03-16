@@ -18,7 +18,7 @@ Examples
 'june 2025'
 """
 
-from config import MONTH_NAMES
+from .config import MONTH_NAMES
 
 
 def table_name_for_day(year: int, month: int, day: int) -> str:
