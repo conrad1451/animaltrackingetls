@@ -1,7 +1,7 @@
 # etl_script.py
 
 import os
-from monarch_etl import monarch_etl_day_scan, monarch_etl_multi_day_scan
+from monarch_etl import monarch_etl_day_scan, monarch_etl_multi_day_scan, monarch_etl
 
 # --- Database connection string (from environment variables) ---
 AIVEN_DB_MONARCH = os.getenv('AIVEN_DB_MONARCH')
@@ -109,5 +109,7 @@ if __name__ == '__main__':
     # monarch_etl_multi_day_scan(2025, 11, 1, 30, conn_string)
     # monarch_etl_multi_day_scan(2025, 12, 1, 31, conn_string)
 
-    monarch_etl_multi_day_scan(2026, 1, 1, 31, conn_string)
+    # monarch_etl_multi_day_scan(2026, 1, 1, 31, conn_string)
     # monarch_etl_multi_day_scan(2026, 2, 1, 28, conn_string)
+
+    monarch_etl(2026, 2, conn_string)
