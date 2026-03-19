@@ -65,6 +65,10 @@ jobs:
       - name: Clean up old log file
         run: rm -f etl_output.log # Deletes the log file if it exists
 
+        # CHQ: Claude AI clearing python bytecode cache
+      - name: Clear Python bytecode cache
+        run: find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null; find . -name "*.pyc" -delete 2>/dev/null; true
+
       - name: Run ETL Script
         id: run_script
         # run: python etl_past_day_script.py 2>&1 | tee etl_output.log
