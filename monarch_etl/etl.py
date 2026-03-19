@@ -24,6 +24,7 @@ from .logger import logger
 from .table_naming import table_name_for_day, table_name_for_month
 from .transform import transform_gbif_data
 
+from .cleaning import get_rejections, clear_rejections  # add to imports
 
 # ---------------------------------------------------------------------------
 # Whole-month ETL
@@ -42,6 +43,8 @@ def monarch_etl(year: int, month: int, conn_string: str) -> None:
     """
     logger.info(f"=== monarch_etl START: {year}-{month:02d} (whole month) ===")
 
+    clear_rejections()  # reset before each run
+
     raw_data = extract_gbif_data(
         target_year=year,
         target_month=month,
@@ -55,6 +58,14 @@ def monarch_etl(year: int, month: int, conn_string: str) -> None:
         return
 
     df = transform_gbif_data(raw_data)
+
+    # CHQ: Claude AI: Inspect what was rejected during cleaning
+    df_bad = get_rejections()
+    if not df_bad.empty:
+        logger.warning(f"Rejected rows: {len(df_bad)}")
+        logger.warning(f"Reasons:\n{df_bad['_failure_reason'].value_counts().to_string()}")
+        df_bad.to_csv(f"rejected_{year}_{month:02d}.csv", index=False)
+
     if df.empty:
         logger.info("Transformed DataFrame is empty. Nothing to load.")
         return
@@ -83,6 +94,8 @@ def monarch_etl_day_scan(year: int, month: int, day: int, conn_string: str) -> N
     """
     logger.info(f"=== monarch_etl_day_scan START: {year}-{month:02d}-{day:02d} ===")
 
+    clear_rejections()  # reset before each run
+
     raw_data = extract_gbif_data(
         target_year=year,
         target_month=month,
@@ -98,6 +111,14 @@ def monarch_etl_day_scan(year: int, month: int, day: int, conn_string: str) -> N
         return
 
     df = transform_gbif_data(raw_data)
+
+    # CHQ: Claude AI: Inspect what was rejected during cleaning
+    df_bad = get_rejections()
+    if not df_bad.empty:
+        logger.warning(f"Rejected rows: {len(df_bad)}")
+        logger.warning(f"Reasons:\n{df_bad['_failure_reason'].value_counts().to_string()}")
+        df_bad.to_csv(f"rejected_{year}_{month:02d}_{day:02d}.csv", index=False)
+
     if df.empty:
         logger.info("Transformed DataFrame is empty. Nothing to load.")
         return
