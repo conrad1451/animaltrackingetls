@@ -171,7 +171,17 @@ def _rescue_event_dates(df: pd.DataFrame) -> pd.DataFrame:
 
 def _parse_event_dates(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
-    df["eventDateParsed"] = pd.to_datetime(df["eventDate"], errors="coerce", utc=True)
+    df["eventDateParsed"] = pd.to_datetime(df["eventDate"], errors="coerce")
+    
+    # Localize naive datetimes to UTC, or convert tz-aware ones to UTC
+    def _fix_timezone(dt):
+        if dt is pd.NaT:
+            return dt
+        if dt.tzinfo is None:
+            return dt.tz_localize("UTC")
+        return dt.tz_convert("UTC")
+
+    df["eventDateParsed"] = df["eventDateParsed"].apply(_fix_timezone)
 
     bad_mask = df["eventDateParsed"].isna()
     if bad_mask.any():
