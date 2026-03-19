@@ -172,7 +172,8 @@ def _rescue_event_dates(df: pd.DataFrame) -> pd.DataFrame:
 def _parse_event_dates(df: pd.DataFrame) -> pd.DataFrame:
     logger.info(f"DEBUG _parse_event_dates sample before parse: {df['eventDate'].head(3).tolist()}")
     df = df.copy()
-    df["eventDateParsed"] = pd.to_datetime(df["eventDate"], errors="coerce")
+    # CHQ: Claude AI added format="mixed" to the parse call to handle different time formats
+    df["eventDateParsed"] = pd.to_datetime(df["eventDate"], errors="coerce", format="mixed")
     logger.info(f"DEBUG after pd.to_datetime sample: {df['eventDateParsed'].head(3).tolist()}")
     
     # Localize naive datetimes to UTC, or convert tz-aware ones to UTC
