@@ -182,10 +182,10 @@ jobs:
           fi
       - name: Check for new data
         # (Optional: for debugging)
-        # You could add steps here to verify data in Neon, e.g., using psql
+        # You could add steps here to verify data in database, e.g., using psql
         # This step is just a placeholder to show where you might add checks.
         run: |
-          echo "ETL script finished. Check Neon database for updated data."
+          echo "ETL script finished. Check database for updated data."
 
         # CHQ: Claude AI added step to upload generated CSV to GitHub artifacts
       - name: Upload rejection CSVs
