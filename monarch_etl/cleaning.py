@@ -121,8 +121,7 @@ def _rescue_event_dates(df: pd.DataFrame) -> pd.DataFrame:
         return df
 
     raw = df["eventDate"].astype(str).str.strip()
-    rescued_count = 0
-
+ 
     def _fix(val: str) -> str:
         """Return a normalised ISO date string, or the original value."""
         if not val or val.lower() in ("none", "nan", "nat", ""):
@@ -143,7 +142,20 @@ def _rescue_event_dates(df: pd.DataFrame) -> pd.DataFrame:
         return val
 
     fixed = raw.apply(_fix)
+
+    # CHQ: Claude AI: debug — remove after diagnosis
     changed_mask = fixed != raw
+    if changed_mask.any():
+        sample = pd.DataFrame({
+            "original": raw[changed_mask],
+            "fixed":    fixed[changed_mask],
+        }).head(20)
+        logger.info(f"Sample of rescued/modified eventDate values:\n{sample.to_string()}")
+
+    # also log a sample of values that were NOT changed, to confirm they look right
+    unchanged_sample = raw[~changed_mask].head(10).tolist()
+    logger.info(f"Sample of unchanged eventDate values (will go to parser as-is): {unchanged_sample}")
+    
     rescued_count = changed_mask.sum()
 
     if rescued_count:
