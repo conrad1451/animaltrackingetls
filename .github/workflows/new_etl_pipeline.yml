@@ -186,3 +186,11 @@ jobs:
         # This step is just a placeholder to show where you might add checks.
         run: |
           echo "ETL script finished. Check Neon database for updated data."
+
+        # CHQ: Claude AI added step to upload generated CSV to GitHub artifacts
+      - name: Upload rejection CSVs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rejected-rows-${{ github.run_id }}
+          path: rejected_*.csv
