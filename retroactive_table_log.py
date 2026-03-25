@@ -28,7 +28,10 @@ def backfill_inventory(conn_string: str, month: int, year: int):
     if not conn_string:
         logger.error("Connection string is empty!")
         return
-
+    
+    # SQLAlchemy 2.0 requires postgresql:// not postgres://
+    conn_string = conn_string.replace("postgres://", "postgresql://", 1)
+  
     my_calendar = {
         1: "january",   2: "february",  3: "march",
         4: "april",     5: "may",       6: "june",
