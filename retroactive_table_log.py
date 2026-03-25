@@ -1,7 +1,7 @@
 # retroactive_table_log.py
 import os
 import logging
-from datetime import date
+from datetime import date, datetime, timezone   # ← added
 from sqlalchemy import create_engine, text
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
