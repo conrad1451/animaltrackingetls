@@ -23,6 +23,7 @@ def register_month_in_inventory(engine, date_obj, table_name, count):
             "record_count": count
         })
 
+# CHQ: Claude AI updated table name to include month and year only 
 def backfill_inventory(conn_string: str, month: int, year: int):
     if not conn_string:
         logger.error("Connection string is empty!")
