@@ -22,8 +22,8 @@ def register_month_in_inventory(engine, date_obj, table_name, count):
         conn.execute(query, {
             "available_date": date_obj,
             "table_name": table_name,
-            "record_count": count
-            "processed_at":  datetime.now(timezone.utc)   # CHQ: Claude AI added
+            "record_count": count,
+            "processed_at":  datetime.now(timezone.utc),   # CHQ: Claude AI added
         })
 
 # CHQ: Claude AI updated table name to include month and year only 
