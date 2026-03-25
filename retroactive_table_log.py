@@ -8,19 +8,22 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 def register_month_in_inventory(engine, date_obj, table_name, count):
+    # CHQ: Claude AI modified query
     query = text("""
-    INSERT INTO data_inventory (available_date, table_name, record_count)
-    VALUES (:available_date, :table_name, :record_count)
+    INSERT INTO data_inventory (available_date, table_name, record_count, processed_at)
+    VALUES (:available_date, :table_name, :record_count, :processed_at)
     ON CONFLICT (available_date) DO UPDATE SET 
         table_name = EXCLUDED.table_name,
         record_count = EXCLUDED.record_count,
         processed_at = CURRENT_TIMESTAMP;
     """)
+
     with engine.begin() as conn:
         conn.execute(query, {
             "available_date": date_obj,
             "table_name": table_name,
             "record_count": count
+            "processed_at":  datetime.now(timezone.utc)   # CHQ: Claude AI added
         })
 
 # CHQ: Claude AI updated table name to include month and year only 
