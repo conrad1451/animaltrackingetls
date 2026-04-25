@@ -38,7 +38,7 @@ def table_name_for_month(year: int, month: int) -> str:
     Return the table name for a whole-month load.
 
     Format: ``<monthname> <year>``
-    e.g. ``june 2025``
+    e.g. ``june2025``
     """
-    return f"{MONTH_NAMES[month]} {year}"
+    return f"{MONTH_NAMES[month]}{year}"
     
