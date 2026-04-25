@@ -114,3 +114,4 @@ if __name__ == '__main__':
 
     # monarch_etl(2026, 1, conn_string)
     # monarch_etl(2026, 2, conn_string)
+    monarch_etl(2026, 3, conn_string)
