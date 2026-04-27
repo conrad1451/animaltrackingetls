@@ -172,19 +172,15 @@ def _rescue_event_dates(df: pd.DataFrame) -> pd.DataFrame:
 def _parse_event_dates(df: pd.DataFrame) -> pd.DataFrame:
     logger.info(f"DEBUG _parse_event_dates sample before parse: {df['eventDate'].head(3).tolist()}")
     df = df.copy()
-    # CHQ: Claude AI added format="mixed" to the parse call to handle different time formats
-    df["eventDateParsed"] = pd.to_datetime(df["eventDate"], errors="coerce", format="mixed")
-    logger.info(f"DEBUG after pd.to_datetime sample: {df['eventDateParsed'].head(3).tolist()}")
     
-    # Localize naive datetimes to UTC, or convert tz-aware ones to UTC
-    def _fix_timezone(dt):
-        if dt is pd.NaT:
-            return dt
-        if dt.tzinfo is None:
-            return dt.tz_localize("UTC")
-        return dt.tz_convert("UTC")
-
-    df["eventDateParsed"] = df["eventDateParsed"].apply(_fix_timezone)
+    # Parse with utc=True to handle mixed timezones properly
+    df["eventDateParsed"] = pd.to_datetime(
+        df["eventDate"], 
+        errors="coerce", 
+        format="mixed",
+        utc=True  # CHQ: Claude AI: Added this line to make all datetimes UTC-aware
+    )
+    logger.info(f"DEBUG after pd.to_datetime sample: {df['eventDateParsed'].head(3).tolist()}")
 
     bad_mask = df["eventDateParsed"].isna()
     if bad_mask.any():
