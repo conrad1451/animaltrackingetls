@@ -97,7 +97,7 @@ jobs:
 
       # CHQ: Step added by me
       # New Step to catch the specific date error
-      - name: Validate Incompatible Data types with Date Error
+      - name: Validate Integer Bounds Error
         run: |
           if grep -q "OverflowError: Python integer -1 out of bounds for uint32" etl_output.log; then
             echo "::error::ETL run failed: out of bounds error."
@@ -178,6 +178,28 @@ jobs:
         # This step is just a placeholder to show where you might add checks.
         run: |
           echo "ETL script finished. Check database for updated data."
+      # step added by Claude AI
+      - name: Check for rejected rows
+        if: always()
+        run: |
+          REJECTED_FILES=$(ls rejected_*.csv 2>/dev/null)
+          if [ -z "$REJECTED_FILES" ]; then
+            echo "No rejection CSVs found. All rows parsed successfully."
+            exit 0
+          fi
+          TOTAL_REJECTED=0
+          for f in $REJECTED_FILES; do
+            ROWS=$(( $(wc -l < "$f") - 1 ))
+            if [ $ROWS -gt 0 ]; then
+              echo "⚠️ $ROWS rejected rows in $f:"
+              cat "$f"
+              TOTAL_REJECTED=$(( TOTAL_REJECTED + ROWS ))
+            fi
+          done
+          if [ $TOTAL_REJECTED -gt 0 ]; then
+            echo "::error::ETL run failed: $TOTAL_REJECTED total rows were rejected due to unparseable dates."
+            exit 1
+          fi
 
         # CHQ: Claude AI added step to upload generated CSV to GitHub artifacts
       - name: Upload rejection CSVs
