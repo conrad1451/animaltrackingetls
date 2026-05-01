@@ -44,6 +44,11 @@ jobs:
       AI_ENDPOINT_BASE_URL: ${{ secrets.AI_ENDPOINT_BASE_URL  }}
       GOOGLE_VM_DOCKER_HOSTED_SQL: ${{ secrets.GOOGLE_VM_DOCKER_HOSTED_SQL  }}
     steps:
+      - name: Mitigate CVE-2026-31431 (Copy Fail) - remove once GitHub ships patched runner images
+        run: |
+          echo "install algif_aead /bin/false" | sudo tee /etc/modprobe.d/disable-algif-aead.conf
+          sudo rmmod algif_aead 2>/dev/null || true
+
       - name: Checkout code
         uses: actions/checkout@v4 # Action to check out your repository code
 
@@ -57,76 +62,76 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt # Install all libraries listed in requirements.txt
 
-      - name: Run ETL Script
-        id: run_script # Add an ID to this step to reference its output
-        run: python monarch_etl_gemini_ai.py 2>&1 | tee etl_output.log # Capture output to a log file
+      # - name: Run ETL Script
+      #   id: run_script # Add an ID to this step to reference its output
+      #   run: python monarch_etl_gemini_ai.py 2>&1 | tee etl_output.log # Capture output to a log file
 
-        # CHQ: step added by Gemini AI
-      - name: Validate Batch Coordinates Type
-        run: |
-          if grep -q "::error::The output of 'produce_batch_coordinates' is not a list." etl_output.log; then
-            echo "Type validation failed. The 'produce_batch_coordinates' function returned an invalid type."
-            exit 1
-          else
-            echo "Type validation passed. The 'produce_batch_coordinates' function returned a list."
-          fi
+      #   # CHQ: step added by Gemini AI
+      # - name: Validate Batch Coordinates Type
+      #   run: |
+      #     if grep -q "::error::The output of 'produce_batch_coordinates' is not a list." etl_output.log; then
+      #       echo "Type validation failed. The 'produce_batch_coordinates' function returned an invalid type."
+      #       exit 1
+      #     else
+      #       echo "Type validation passed. The 'produce_batch_coordinates' function returned a list."
+      #     fi
 
-        # CHQ: step added by Gemini AI
-      - name: Check for SQLAlchemy URL Error
-        run: |
-          if grep -q "Could not parse SQLAlchemy URL" etl_output.log; then
-            echo "::error::ETL run considered a failure: Malformed database connection URL."
-            exit 1
-          else
-            echo "SQLAlchemy URL validation passed."
-          fi
+      #   # CHQ: step added by Gemini AI
+      # - name: Check for SQLAlchemy URL Error
+      #   run: |
+      #     if grep -q "Could not parse SQLAlchemy URL" etl_output.log; then
+      #       echo "::error::ETL run considered a failure: Malformed database connection URL."
+      #       exit 1
+      #     else
+      #       echo "SQLAlchemy URL validation passed."
+      #     fi
 
-      # CHQ: step added by me
-      - name: Check for Database Connection Timeout Error
-        run: |
-          if grep -q "Error loading data into database" etl_output.log; then
-            echo "::error::ETL run considered a failure: Firewall prevented connection to database."
-            exit 1
-          else
-            echo "Database Connection Timeout validation passed."
-          fi
+      # # CHQ: step added by me
+      # - name: Check for Database Connection Timeout Error
+      #   run: |
+      #     if grep -q "Error loading data into database" etl_output.log; then
+      #       echo "::error::ETL run considered a failure: Firewall prevented connection to database."
+      #       exit 1
+      #     else
+      #       echo "Database Connection Timeout validation passed."
+      #     fi
 
-        # CHQ: step added by Gemini AI
-      - name: Check ETL Results for Data Loading Success
-        run: |
-          if grep -q "No data to load as DataFrame is empty" etl_output.log; then
-            echo "::error::ETL run considered a failure: No data was loaded into the database."
-            exit 1 # Exit with a non-zero status to mark the job as failed
-          else
-            echo "ETL run completed with data loaded (or no 'no data' warning found)."
-          fi
+      #   # CHQ: step added by Gemini AI
+      # - name: Check ETL Results for Data Loading Success
+      #   run: |
+      #     if grep -q "No data to load as DataFrame is empty" etl_output.log; then
+      #       echo "::error::ETL run considered a failure: No data was loaded into the database."
+      #       exit 1 # Exit with a non-zero status to mark the job as failed
+      #     else
+      #       echo "ETL run completed with data loaded (or no 'no data' warning found)."
+      #     fi
 
-      - name: Check ETL Results for properly loaded records from API endpoint
-        run: |
-          if grep "Error for record at original index" etl_output.log; then
-            echo "::error::ETL run considered a failure: Error for a record."
-            exit 1 # Exit with a non-zero status to mark the job as failed
-          else
-            echo "ETL run completed with records loaded (or no 'no data' warning found)."
-          fi
-        # run: |
-        #   if grep -q "Error for record at original index" etl_output.log; then
-        #     echo "::error::ETL run considered a failure: No data was loaded into the database."
-        #     exit 1 # Exit with a non-zero status to mark the job as failed
-        #   else
-        #     echo "ETL run completed with data loaded (or no 'no data' warning found)."
-        #   fi
-      - name: Check Database connection string to ensure it is correct
-        run: |
-          if grep "FATAL ERROR: DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL_ALT environment variable is NOT SET." etl_output.log; then
-            echo "::error::ETL run considered a failure: Error for a record."
-            exit 1 # Exit with a non-zero status to mark the job as failed
-          else
-            echo "ETL run completed with successful loading into database."
-          fi
-      - name: Check for new data
-        # (Optional: for debugging)
-        # You could add steps here to verify data in Neon, e.g., using psql
-        # This step is just a placeholder to show where you might add checks.
-        run: |
-          echo "ETL script finished. Check Neon database for updated data."
+      # - name: Check ETL Results for properly loaded records from API endpoint
+      #   run: |
+      #     if grep "Error for record at original index" etl_output.log; then
+      #       echo "::error::ETL run considered a failure: Error for a record."
+      #       exit 1 # Exit with a non-zero status to mark the job as failed
+      #     else
+      #       echo "ETL run completed with records loaded (or no 'no data' warning found)."
+      #     fi
+      #   # run: |
+      #   #   if grep -q "Error for record at original index" etl_output.log; then
+      #   #     echo "::error::ETL run considered a failure: No data was loaded into the database."
+      #   #     exit 1 # Exit with a non-zero status to mark the job as failed
+      #   #   else
+      #   #     echo "ETL run completed with data loaded (or no 'no data' warning found)."
+      #   #   fi
+      # - name: Check Database connection string to ensure it is correct
+      #   run: |
+      #     if grep "FATAL ERROR: DIGITAL_OCEAN_VM_DOCKER_HOSTED_SQL_ALT environment variable is NOT SET." etl_output.log; then
+      #       echo "::error::ETL run considered a failure: Error for a record."
+      #       exit 1 # Exit with a non-zero status to mark the job as failed
+      #     else
+      #       echo "ETL run completed with successful loading into database."
+      #     fi
+      # - name: Check for new data
+      #   # (Optional: for debugging)
+      #   # You could add steps here to verify data in Neon, e.g., using psql
+      #   # This step is just a placeholder to show where you might add checks.
+      #   run: |
+      #     echo "ETL script finished. Check Neon database for updated data."
