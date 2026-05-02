@@ -97,7 +97,17 @@ if __name__ == '__main__':
     # monarch_etl_multi_day_scan(2024,   12, 1, 31, conn_string)
       
 
-    monarch_etl(2023, 12, conn_string)      
+    # monarch_etl(2023, 3, conn_string)   
+    # monarch_etl(2023, 4, conn_string)   
+    # monarch_etl(2023, 5, conn_string)   
+    # monarch_etl(2023, 6, conn_string)   
+    # monarch_etl(2023, 7, conn_string)   
+    # monarch_etl(2023, 8, conn_string)   
+    # monarch_etl(2023, 9, conn_string)   
+    # monarch_etl(2023, 10, conn_string)   
+    monarch_etl(2023, 11, conn_string)   
+    # monarch_etl(2023, 12, conn_string)   
+
     # monarch_etl(2024, 1, conn_string)      
     # monarch_etl(2024, 2, conn_string)      
     # monarch_etl(2024, 3, conn_string)      
