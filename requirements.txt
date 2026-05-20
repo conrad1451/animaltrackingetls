@@ -14,3 +14,4 @@ python-dateutil
 sqlalchemy
 urllib3>=2.6.0 # not directly required, pinned by Snyk to avoid a vulnerability
 werkzeug>=3.1.5 # not directly required, pinned by Snyk to avoid a vulnerability
+idna>=3.15 # not directly required, pinned by Snyk to avoid a vulnerability
