@@ -60,8 +60,8 @@ if __name__ == '__main__':
   
     # monarch_etl(2022, 1, conn_string)   
     # monarch_etl(2022, 2, conn_string)   
-    # monarch_etl(2022, 3, conn_string)   
-    monarch_etl(2022, 4, conn_string)   
+    monarch_etl(2022, 3, conn_string)   
+    # monarch_etl(2022, 4, conn_string)   
     # monarch_etl(2022, 5, conn_string)   
     # monarch_etl(2022, 6, conn_string)   
     # monarch_etl(2022, 7, conn_string)   
