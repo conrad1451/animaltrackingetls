@@ -32,8 +32,8 @@ if __name__ == '__main__':
     # monarch_etl_multi_day_scan(2020, 12, 1, 31, conn_string)
   
     # monarch_etl(2021, 1, conn_string)   
-    # monarch_etl(2021, 2, conn_string)   
-    monarch_etl(2021, 3, conn_string)   
+    monarch_etl(2021, 2, conn_string)   
+    # monarch_etl(2021, 3, conn_string)   
     # monarch_etl(2021, 4, conn_string)   
     # monarch_etl(2021, 5, conn_string)   
     # monarch_etl(2021, 6, conn_string)   
