@@ -38,18 +38,34 @@ jobs:
       # 3. Create the backup file and encrypt it immediately
       - name: Create Encrypted Database Dump
         run: |
-          pg_dump -d "$database_url" -F c -b -v -f backup.sql
-          echo "$database_url" | gpg --batch --yes --passphrase-fd 0 -c -o backup_$(date +%F_%H-%M-%S).sql.gpg backup.sql
+          # Fallback mechanism: check UPPERCASE first, then lowercase
+          DB_CONN="${DATABASE_URL:-$database_url}"
+
+          # Absolute block safety check
+          if [ -z "$DB_CONN" ]; then
+            echo "❌ ERROR: Database connection string is empty!"
+            echo "Infisical secrets found, but they are not named 'database_url' or 'DATABASE_URL'."
+            exit 1
+          fi
+
+          echo "✅ Database URL resolved. Running pg_dump..."
+          pg_dump -d "$DB_CONN" -F c -b -v -f backup.sql
+
+          echo "$DB_CONN" | gpg --batch --yes --passphrase-fd 0 -c -o backup_$(date +%F_%H-%M-%S).sql.gpg backup.sql
           shred -u backup.sql
 
-      # 4. Configure AWS CLI for Cloudflare R2 using safe shell variables
+      # 4. Configure AWS CLI for Cloudflare R2
       - name: Configure AWS CLI for Cloudflare R2
         run: |
-          aws configure set aws_access_key_id "$r2_access_key_id"
-          aws configure set aws_secret_access_key "$r2_secret_access_key"
+          R2_KEY="${R2_ACCESS_KEY_ID:-$r2_access_key_id}"
+          R2_SECRET="${R2_SECRET_ACCESS_KEY:-$r2_secret_access_key}"
+
+          aws configure set aws_access_key_id "$R2_KEY"
+          aws configure set aws_secret_access_key "$R2_SECRET"
           aws configure set default.region auto
 
       # 5. Upload Encrypted Backup to Cloudflare R2
       - name: Upload Encrypted Backup to Cloudflare R2
         run: |
-          aws s3 cp backup_*.sql.gpg "$r2_bucket_url" --endpoint-url "$r2_bucket_url"
+          R2_URL="${R2_BUCKET_URL:-$r2_bucket_url}"
+          aws s3 cp backup_*.sql.gpg "$R2_URL" --endpoint-url "$R2_URL"
