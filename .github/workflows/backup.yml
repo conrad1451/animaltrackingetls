@@ -9,6 +9,10 @@ on:
     # - cron: "0 2 * * *" # Runs every day at 2:00 AM UTC
   workflow_dispatch: # Allows you to run it manually anytime
 
+permissions:
+  id-token: write # CRITICAL: Allows GitHub to securely authenticate with Infisical without a password
+  contents: read
+
 jobs:
   backup:
     runs-on: ubuntu-latest
@@ -17,31 +21,41 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+        # 1. Fetch Secrets dynamically from Infisical using OIDC
+      - name: Fetch Secrets from Infisical
+        uses: infisical/secrets-action@v1.0.9 #  All lowercase "infisical" fixes the warning
+        with:
+          method: "oidc"
+          identity-id: "00365bb9-278e-41e8-926d-3ee1419e2263"
+          env-slug: "prod"
+          project-slug: "monarch-and-other-projects-yy-1y"
+
       - name: Install Database Tools & AWS CLI
         run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client
 
+        # 3. Create the backup file and encrypt it immediately
       - name: Create Encrypted Database Dump
         env:
-          PGPASSWORD: ${{ secrets.DB_PASSWORD }}
+          PGPASSWORD: ${{ env.DB_PASSWORD }} # Pulled from Infisical automatically
         run: |
-          # 1. Dump the database to a compressed SQL file
-          pg_dump -h ${{ secrets.DB_HOST }} -U ${{ secrets.DB_USER }} -d ${{ secrets.DB_NAME }} -F c -b -v -f backup.sql
+          # Dump Postgres DB to a compressed file
+          pg_dump -h ${{ env.DB_HOST }} -U ${{ env.DB_USER }} -d ${{ env.DB_NAME }} -F c -b -v -f backup.sql
 
-          # 2. Encrypt the backup file using an automated timestamp name
-          echo "${{ secrets.DB_PASSWORD }}" | gpg --batch --yes --passphrase-fd 0 -c -o backup_$(date +%F_%H-%M-%S).sql.gpg backup.sql
+          # Symmetrically encrypt the backup using the DB password as a key
+          echo "${{ env.DB_PASSWORD }}" | gpg --batch --yes --passphrase-fd 0 -c -o backup_$(date +%F_%H-%M-%S).sql.gpg backup.sql
 
-          # 3. Shred the unencrypted file from the runner memory immediately
+          # Safely erase unencrypted file from runner memory
           shred -u backup.sql
 
       - name: Configure AWS CLI for Cloudflare R2
         run: |
-          aws configure set aws_access_key_id ${{ secrets.R2_ACCESS_KEY_ID }}
-          aws configure set aws_secret_access_key ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          aws configure set aws_access_key_id ${{ env.R2_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ env.R2_SECRET_ACCESS_KEY }}
           aws configure set default.region auto
 
       - name: Upload Encrypted Backup to Cloudflare R2
         run: |
           # Uploads the .gpg file using R2's S3-compatible API
-          aws s3 cp backup_*.sql.gpg ${{ secrets.R2_BUCKET_URL }} --endpoint-url ${{ secrets.R2_BUCKET_URL }}
+          aws s3 cp backup_*.sql.gpg ${{ env.R2_BUCKET_URL }} --endpoint-url ${{ env.R2_BUCKET_URL }}
