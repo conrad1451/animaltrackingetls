@@ -25,6 +25,12 @@ jobs:
           project-slug: "monarch-and-other-projects-yy-1y"
           oidc-audience: "https://app.infisical.com"
 
+      - name: Debug Secrets
+        run: |
+          echo "DATABASE_URL set: ${{ env.DATABASE_URL != '' }}"
+          echo "All env vars with DATABASE:"
+          env | grep -i database || echo "none found"
+
       - name: Install PostgreSQL Client
         run: |
           sudo apt-get update
