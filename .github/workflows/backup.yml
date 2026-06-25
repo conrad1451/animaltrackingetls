@@ -1,25 +1,21 @@
 name: Secure Database Backup
 
-# CHQ: Gemini AI generated
+# CHQ: Gemini AI generated, Claude AI debugged
 
 on:
   schedule:
-    - cron: "0 14 * * 0" # Runs every day at 14:00 UTC (10:00 AM EDT)
-  workflow_dispatch: # Allows you to run it manually anytime
-
+    - cron: "0 14 * * 0"
+  workflow_dispatch:
 permissions:
-  id-token: write # CRITICAL: Allows GitHub to securely authenticate with Infisical without a password
+  id-token: write
   contents: read
-
 jobs:
   backup:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 1. Fetch Secrets dynamically from Infisical using OIDC
       - name: Fetch Secrets from Infisical
         uses: infisical/secrets-action@v1.0.9
         with:
@@ -29,43 +25,29 @@ jobs:
           project-slug: "monarch-and-other-projects-yy-1y"
           oidc-audience: "https://app.infisical.com"
 
-      # 2. Install Database Tools & AWS CLI
-      - name: Install Database Tools & AWS CLI
+      - name: Install PostgreSQL Client
         run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client
 
-      # 3. Create the backup file and encrypt it immediately
-      - name: Create Encrypted Database Dump
+      - name: Create Database Dump
         run: |
-          # Fallback mechanism: check UPPERCASE first, then lowercase
           DB_CONN="${DATABASE_URL:-$database_url}"
-
-          # Absolute block safety check
           if [ -z "$DB_CONN" ]; then
             echo "❌ ERROR: Database connection string is empty!"
-            echo "Infisical secrets found, but they are not named 'database_url' or 'DATABASE_URL'."
             exit 1
           fi
-
           echo "✅ Database URL resolved. Running pg_dump..."
-          pg_dump -d "$DB_CONN" -F c -b -v -f backup.sql
+          PGSSLMODE=require pg_dump -d "$DB_CONN" -F c -b -v -f "backup_$(date +%F_%H-%M-%S).sql"
 
-          echo "$DB_CONN" | gpg --batch --yes --passphrase-fd 0 -c -o backup_$(date +%F_%H-%M-%S).sql.gpg backup.sql
-          shred -u backup.sql
-
-      # 4. Configure AWS CLI for Cloudflare R2
       - name: Configure AWS CLI for Cloudflare R2
         run: |
-          R2_KEY="${R2_ACCESS_KEY_ID:-$r2_access_key_id}"
-          R2_SECRET="${R2_SECRET_ACCESS_KEY:-$r2_secret_access_key}"
-
-          aws configure set aws_access_key_id "$R2_KEY"
-          aws configure set aws_secret_access_key "$R2_SECRET"
+          aws configure set aws_access_key_id "${R2_ACCESS_KEY_ID:-$r2_access_key_id}"
+          aws configure set aws_secret_access_key "${R2_SECRET_ACCESS_KEY:-$r2_secret_access_key}"
           aws configure set default.region auto
 
-      # 5. Upload Encrypted Backup to Cloudflare R2
-      - name: Upload Encrypted Backup to Cloudflare R2
+      - name: Upload Backup to Cloudflare R2
         run: |
-          R2_URL="${R2_BUCKET_URL:-$r2_bucket_url}"
-          aws s3 cp backup_*.sql.gpg "$R2_URL" --endpoint-url "$R2_URL"
+          BUCKET="${R2_BUCKET_NAME:-$r2_bucket_name}"
+          ENDPOINT="${R2_ENDPOINT_URL:-$r2_endpoint_url}"
+          aws s3 cp backup_*.sql "s3://$BUCKET/backups/" --endpoint-url "$ENDPOINT"
