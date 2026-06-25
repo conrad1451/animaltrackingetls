@@ -1,0 +1,47 @@
+name: Secure Database Backup
+
+# CHQ: Gemini AI generated
+
+on:
+  schedule:
+    - cron: "0 14 * * *" #  RUns every Sunday at 1400 UTC (1000 AM EDT)
+    # - cron: "0 2 * * 0 [ $(( $(date +%s) / 604800 % 2 )) -eq 0 ] && /path/to/your/script.sh"
+    # - cron: "0 2 * * *" # Runs every day at 2:00 AM UTC
+  workflow_dispatch: # Allows you to run it manually anytime
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Database Tools & AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Create Encrypted Database Dump
+        env:
+          PGPASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          # 1. Dump the database to a compressed SQL file
+          pg_dump -h ${{ secrets.DB_HOST }} -U ${{ secrets.DB_USER }} -d ${{ secrets.DB_NAME }} -F c -b -v -f backup.sql
+
+          # 2. Encrypt the backup file using an automated timestamp name
+          echo "${{ secrets.DB_PASSWORD }}" | gpg --batch --yes --passphrase-fd 0 -c -o backup_$(date +%F_%H-%M-%S).sql.gpg backup.sql
+
+          # 3. Shred the unencrypted file from the runner memory immediately
+          shred -u backup.sql
+
+      - name: Configure AWS CLI for Cloudflare R2
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.R2_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          aws configure set default.region auto
+
+      - name: Upload Encrypted Backup to Cloudflare R2
+        run: |
+          # Uploads the .gpg file using R2's S3-compatible API
+          aws s3 cp backup_*.sql.gpg ${{ secrets.R2_BUCKET_URL }} --endpoint-url ${{ secrets.R2_BUCKET_URL }}
