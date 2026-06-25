@@ -29,6 +29,8 @@ jobs:
           identity-id: "00365bb9-278e-41e8-926d-3ee1419e2263"
           env-slug: "prod"
           project-slug: "monarch-and-other-projects-yy-1y"
+          oidc-audience: "https://app.infisical.com" # 👈 Add this line to match your dashboard
+        #   oidc-audience: "infisical" # 👈 Add this exact line
 
       - name: Install Database Tools & AWS CLI
         run: |
