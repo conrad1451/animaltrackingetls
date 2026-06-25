@@ -27,8 +27,11 @@ jobs:
 
       - name: Debug Secrets
         run: |
-          echo "DATABASE_URL set: ${{ env.DATABASE_URL != '' }}"
-          echo "All env vars with DATABASE:"
+          if [ -n "$DATABASE_URL" ]; then
+          echo "DATABASE_URL is set ✅"
+          else
+          echo "DATABASE_URL is empty ❌"
+          fi
           env | grep -i database || echo "none found"
 
       - name: Install PostgreSQL Client
