@@ -64,8 +64,8 @@ if __name__ == '__main__':
     # monarch_etl(target_year, target_month)
  
     # retroactive_table_log.monarch_etl_table_backfill(2020, 9, conn_string)
-    retroactive_table_log.monarch_etl_table_backfill(2020, 10, conn_string)
-    # retroactive_table_log.monarch_etl_table_backfill(2020, 11, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2020, 10, conn_string)
+    retroactive_table_log.monarch_etl_table_backfill(2020, 11, conn_string)
     # retroactive_table_log.monarch_etl_table_backfill(2020, 12, conn_string)
 
     # retroactive_table_log.monarch_etl_table_backfill(2021, 1, conn_string)
