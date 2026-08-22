@@ -40,6 +40,8 @@ jobs:
       NEON_DB_MONARCH: ${{ secrets.NEON_DB_MONARCH }}
       AIVEN_DB_MONARCH: ${{ secrets.AIVEN_DB_MONARCH }}
 
+    if: github.actor == 'conrad1451'
+
     steps:
       - name: Mitigate CVE-2026-31431 (Copy Fail) - remove once GitHub ships patched runner images
         run: |

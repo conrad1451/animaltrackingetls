@@ -43,6 +43,9 @@ jobs:
         # CHQ: Map secret variable to an environmental variable for the python etl file to use
       AI_ENDPOINT_BASE_URL: ${{ secrets.AI_ENDPOINT_BASE_URL  }}
       GOOGLE_VM_DOCKER_HOSTED_SQL: ${{ secrets.GOOGLE_VM_DOCKER_HOSTED_SQL  }}
+
+    if: github.actor == 'conrad1451'
+
     steps:
       - name: Mitigate CVE-2026-31431 (Copy Fail) - remove once GitHub ships patched runner images
         run: |
