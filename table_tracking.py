@@ -73,8 +73,8 @@ if __name__ == '__main__':
     # retroactive_table_log.monarch_etl_table_backfill(2018, 7, conn_string)
     # retroactive_table_log.monarch_etl_table_backfill(2018, 8, conn_string)
     # retroactive_table_log.monarch_etl_table_backfill(2018, 9, conn_string)
-    # retroactive_table_log.monarch_etl_table_backfill(2018, 10, conn_string)
-    retroactive_table_log.monarch_etl_table_backfill(2018, 11, conn_string)
+    retroactive_table_log.monarch_etl_table_backfill(2018, 10, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2018, 11, conn_string)
     # retroactive_table_log.monarch_etl_table_backfill(2018, 12, conn_string)
     
     # retroactive_table_log.monarch_etl_table_backfill(2019, 1, conn_string)
