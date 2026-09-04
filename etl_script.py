@@ -19,8 +19,8 @@ if conn_string.startswith("postgres://"):
 if __name__ == '__main__':
 
     # monarch_etl(2019, 1, conn_string)
-    # monarch_etl(2019, 2, conn_string)   
-    monarch_etl(2019, 3, conn_string)   
+    monarch_etl(2019, 2, conn_string)   
+    # monarch_etl(2019, 3, conn_string)   
     # monarch_etl(2019, 4, conn_string)   
     # monarch_etl(2019, 5, conn_string)   
     # monarch_etl(2019, 6, conn_string)   
