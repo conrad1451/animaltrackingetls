@@ -27,8 +27,8 @@ if __name__ == '__main__':
     # monarch_etl(2017, 7, conn_string)   
     # monarch_etl(2017, 8, conn_string)   
     # monarch_etl(2017, 9, conn_string)   
-    # monarch_etl(2017, 10, conn_string)   
-    monarch_etl(2017, 11, conn_string)   
+    monarch_etl(2017, 10, conn_string)   
+    # monarch_etl(2017, 11, conn_string)   
     # monarch_etl(2017, 12, conn_string) 
 
 
