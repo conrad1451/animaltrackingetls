@@ -29,10 +29,10 @@ if __name__ == '__main__':
     # monarch_etl(2017, 9, conn_string)   
     # monarch_etl(2017, 10, conn_string)   
     # monarch_etl(2017, 11, conn_string)   
-    # monarch_etl(2017, 12, conn_string) 
+    monarch_etl(2017, 12, conn_string) 
 
 
-    monarch_etl(2018, 1, conn_string)
+    # monarch_etl(2018, 1, conn_string)
     # monarch_etl(2018, 2, conn_string)   
     # monarch_etl(2018, 3, conn_string)   
     # monarch_etl(2018, 4, conn_string)   
