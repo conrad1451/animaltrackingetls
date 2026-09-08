@@ -65,8 +65,22 @@ if __name__ == '__main__':
  
 
     
-    # retroactive_table_log.monarch_etl_table_backfill(2015, 1, conn_string)
-    retroactive_table_log.monarch_etl_table_backfill(2015, 2, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2014, 1, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2014, 2, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2014, 3, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2014, 4, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2014, 5, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2014, 6, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2014, 7, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2014, 8, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2014, 9, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2014, 10, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2014, 11, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2014, 12, conn_string)
+
+    
+    retroactive_table_log.monarch_etl_table_backfill(2015, 1, conn_string)
+    # retroactive_table_log.monarch_etl_table_backfill(2015, 2, conn_string)
     # retroactive_table_log.monarch_etl_table_backfill(2015, 3, conn_string)
     # retroactive_table_log.monarch_etl_table_backfill(2015, 4, conn_string)
     # retroactive_table_log.monarch_etl_table_backfill(2015, 5, conn_string)
