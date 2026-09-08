@@ -17,8 +17,21 @@ if conn_string.startswith("postgres://"):
     conn_string = conn_string.replace("postgres://", "postgresql://", 1)
 
 if __name__ == '__main__':
-    # monarch_etl(2015, 1, conn_string)
-    monarch_etl(2015, 2, conn_string)   
+    # monarch_etl(2014, 1, conn_string)
+    # monarch_etl(2014, 2, conn_string)   
+    # monarch_etl(2014, 3, conn_string)   
+    # monarch_etl(2014, 4, conn_string)   
+    # monarch_etl(2014, 5, conn_string)   
+    # monarch_etl(2014, 6, conn_string)   
+    # monarch_etl(2014, 7, conn_string)   
+    # monarch_etl(2014, 8, conn_string)   
+    # monarch_etl(2014, 9, conn_string)   
+    # monarch_etl(2014, 10, conn_string)   
+    # monarch_etl(2014, 11, conn_string)   
+    # monarch_etl(2014, 12, conn_string) 
+    
+    monarch_etl(2015, 1, conn_string)
+    # monarch_etl(2015, 2, conn_string)   
     # monarch_etl(2015, 3, conn_string)   
     # monarch_etl(2015, 4, conn_string)   
     # monarch_etl(2015, 5, conn_string)   
